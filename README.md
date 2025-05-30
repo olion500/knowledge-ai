@@ -1,98 +1,362 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Knowledge Sync AI
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+AI-powered knowledge management system that collects data from Slack and Jira, processes it with LLM, and generates markdown documentation in GitHub.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🎯 Overview
 
-## Description
+Knowledge Sync AI automatically:
+- 📥 Collects important conversations from Slack and Jira issues
+- 🧠 Processes content using GPT-4 for summarization and classification
+- 📝 Generates structured markdown documentation
+- 🔄 Creates GitHub Pull Requests for team review
+- 🗂️ Organizes documents by topic/product rather than chronologically
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🏗️ Architecture
 
-## Project setup
-
-```bash
-$ pnpm install
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│    Slack    │    │    Jira     │    │   GitHub    │
+│   Events    │    │  Webhooks   │    │     API     │
+└──────┬──────┘    └──────┬──────┘    └──────┬──────┘
+       │                  │                  │
+       └──────────────────┼──────────────────┘
+                          │
+                ┌─────────▼─────────┐
+                │  Knowledge Sync   │
+                │       AI          │
+                └─────────┬─────────┘
+                          │
+                ┌─────────▼─────────┐
+                │     GPT-4         │
+                │   Processing      │
+                └─────────┬─────────┘
+                          │
+                ┌─────────▼─────────┐
+                │   Markdown Docs   │
+                │   + GitHub PR     │
+                └───────────────────┘
 ```
 
-## Compile and run the project
+## 🚀 Features
 
+### Data Collection
+- **Slack Integration**: Monitors channels for specific reactions (📝, 📋, 🔖) or keywords
+- **Jira Integration**: Processes issue updates and comments via webhooks
+- **Smart Filtering**: Only processes content marked as important
+
+### AI Processing
+- **Summarization**: Extracts key points, decisions, and action items
+- **Classification**: Categorizes content into predefined topics
+- **Context Awareness**: Maintains conversation context and participant information
+
+### Document Generation
+- **Structured Markdown**: Consistent formatting with metadata
+- **Topic-based Organization**: Groups by product/feature rather than date
+- **Update Detection**: Merges new information with existing documents
+
+### GitHub Integration
+- **Automated PRs**: Creates pull requests with generated documentation
+- **Review Workflow**: Assigns reviewers and adds appropriate labels
+- **Branch Management**: Creates feature branches for each update
+
+## 📋 Prerequisites
+
+- Node.js 18+
+- PostgreSQL 12+
+- Redis 6+
+- Slack App with Bot Token
+- Jira API Access
+- GitHub Personal Access Token
+- OpenAI API Key
+
+## 🛠️ Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd knowledge-ai
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp env.template .env
+   ```
+   
+   Edit `.env` with your configuration:
+   ```env
+   # Database
+   DATABASE_HOST=localhost
+   DATABASE_PORT=5432
+   DATABASE_USERNAME=postgres
+   DATABASE_PASSWORD=your_password
+   DATABASE_NAME=knowledge_sync_ai
+
+   # Redis
+   REDIS_HOST=localhost
+   REDIS_PORT=6379
+
+   # Slack
+   SLACK_BOT_TOKEN=xoxb-your-bot-token
+   SLACK_SIGNING_SECRET=your-signing-secret
+
+   # Jira
+   JIRA_HOST=https://your-domain.atlassian.net
+   JIRA_USERNAME=your-email@example.com
+   JIRA_API_TOKEN=your-jira-api-token
+
+   # GitHub
+   GITHUB_TOKEN=ghp_your-github-token
+   GITHUB_OWNER=your-github-username
+   GITHUB_REPO=knowledge-docs
+
+   # OpenAI
+   OPENAI_API_KEY=sk-your-openai-api-key
+   ```
+
+4. **Set up the database**
+   ```bash
+   npm run build
+   npm run start:prod
+   ```
+
+## 🔧 Configuration
+
+### Slack App Setup
+
+1. Create a new Slack app at https://api.slack.com/apps
+2. Enable Event Subscriptions:
+   - Request URL: `https://your-domain.com/slack/events`
+   - Subscribe to: `message.channels`, `reaction_added`
+3. Add Bot Token Scopes:
+   - `channels:history`
+   - `channels:read`
+   - `reactions:read`
+   - `users:read`
+4. Install the app to your workspace
+
+### Jira Webhook Setup
+
+1. Go to Jira Settings → System → Webhooks
+2. Create webhook with URL: `https://your-domain.com/jira/webhook`
+3. Select events: Issue created, updated, commented
+
+### GitHub Repository Setup
+
+1. Create a repository for documentation
+2. Generate a Personal Access Token with `repo` scope
+3. Set up branch protection rules for `main` branch
+
+## 🎮 Usage
+
+### Manual Collection
+
+Collect Slack messages with specific reactions:
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+curl -X POST http://localhost:3000/slack/collect \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channelId": "C1234567890",
+    "reactionName": "memo",
+    "hours": 24
+  }'
 ```
 
-## Run tests
-
+Collect messages with keywords:
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+curl -X POST http://localhost:3000/slack/collect \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channelId": "C1234567890",
+    "keywords": ["decision", "action item"],
+    "hours": 48
+  }'
 ```
 
-## Deployment
+### Automatic Processing
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+The system automatically processes:
+- Slack messages with reactions: 📝 (`:memo:`), 📋 (`:clipboard:`), 🔖 (`:bookmark_tabs:`)
+- Slack messages containing keywords: "decision", "action item", "todo", "follow up", "next steps"
+- Jira issues when created, updated, or commented
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 📁 Project Structure
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+```
+src/
+├── common/
+│   ├── dto/              # Data Transfer Objects
+│   ├── entities/         # Database entities
+│   ├── interfaces/       # TypeScript interfaces
+│   ├── decorators/       # Custom decorators
+│   ├── guards/           # Authentication guards
+│   └── filters/          # Exception filters
+├── config/
+│   └── database.config.ts
+├── modules/
+│   ├── slack/            # Slack integration
+│   ├── jira/             # Jira integration
+│   ├── github/           # GitHub integration
+│   ├── llm/              # LLM processing
+│   ├── document/         # Document orchestration
+│   └── database/         # Database operations
+└── main.ts
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🔍 Available Topics
 
-## Resources
+The system classifies content into these predefined topics:
+- `product-planning`
+- `technical-architecture`
+- `bug-reports`
+- `feature-requests`
+- `team-decisions`
+- `project-updates`
+- `security`
+- `performance`
+- `user-feedback`
+- `general-discussion`
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🧪 Testing
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Knowledge Sync AI includes comprehensive unit and integration tests to ensure reliability and maintainability.
 
-## Support
+### Running Tests
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+# Unit tests
+npm run test
 
-## Stay in touch
+# Watch mode for development
+npm run test:watch
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# E2E tests
+npm run test:e2e
 
-## License
+# Test coverage
+npm run test:cov
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# Debug tests
+npm run test:debug
+```
+
+### Test Structure
+
+```
+src/
+├── modules/
+│   ├── slack/
+│   │   ├── slack.service.spec.ts
+│   │   └── slack.controller.spec.ts
+│   ├── llm/
+│   │   └── llm.service.spec.ts
+│   ├── github/
+│   │   └── github.service.spec.ts
+│   └── document/
+│       └── document.service.spec.ts
+├── app.controller.spec.ts
+└── app.service.spec.ts
+
+test/
+├── app.e2e-spec.ts
+└── setup.ts
+```
+
+### Test Coverage
+
+The test suite covers:
+- **Unit Tests**: Individual service and controller methods
+- **Integration Tests**: Module interactions and workflows
+- **E2E Tests**: Complete API endpoints and workflows
+- **Mocking**: External services (Slack, GitHub, OpenAI, Jira)
+
+### Test Configuration
+
+Tests are configured with:
+- **Jest**: Testing framework with TypeScript support
+- **Supertest**: HTTP assertion library for E2E tests
+- **Mock Services**: All external APIs are mocked for reliable testing
+- **Coverage Reports**: Generated in `coverage/` directory
+
+### Writing Tests
+
+When adding new features:
+1. Write unit tests for services and controllers
+2. Mock external dependencies
+3. Test both success and error scenarios
+4. Maintain test coverage above 80%
+
+Example test structure:
+```typescript
+describe('ServiceName', () => {
+  let service: ServiceName;
+  let mockDependency: jest.Mocked<DependencyType>;
+
+  beforeEach(async () => {
+    // Setup test module
+  });
+
+  describe('methodName', () => {
+    it('should handle success case', async () => {
+      // Test implementation
+    });
+
+    it('should handle error case', async () => {
+      // Test error handling
+    });
+  });
+});
+```
+
+## 🚀 Deployment
+
+### Using Railway
+
+1. Connect your GitHub repository to Railway
+2. Set environment variables in Railway dashboard
+3. Deploy automatically on push to main
+
+### Using Docker
+
+```bash
+# Build image
+docker build -t knowledge-sync-ai .
+
+# Run container
+docker run -p 3000:3000 --env-file .env knowledge-sync-ai
+```
+
+## 📊 Monitoring
+
+The application provides logging for:
+- Message processing status
+- LLM API usage and costs
+- GitHub API rate limits
+- Error tracking and debugging
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For issues and questions:
+1. Check the [Issues](../../issues) page
+2. Review the documentation
+3. Contact the development team
+
+---
+
+*Built with ❤️ using NestJS, OpenAI GPT-4, and TypeScript*

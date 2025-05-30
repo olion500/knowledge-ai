@@ -1,0 +1,303 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { SlackService } from '../slack/slack.service';
+import { LLMService } from '../llm/llm.service';
+import { GitHubService } from '../github/github.service';
+import { SlackMessage } from '../../common/interfaces/slack.interface';
+import { JiraIssue } from '../../common/interfaces/jira.interface';
+import {
+  SummaryRequest,
+  ClassificationRequest,
+  DocumentGenerationRequest,
+} from '../../common/interfaces/llm.interface';
+
+@Injectable()
+export class DocumentService {
+  private readonly logger = new Logger(DocumentService.name);
+  private readonly availableTopics: string[] = [
+    'product-planning',
+    'technical-architecture',
+    'bug-reports',
+    'feature-requests',
+    'team-decisions',
+    'project-updates',
+    'security',
+    'performance',
+    'user-feedback',
+    'general-discussion',
+  ];
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly slackService: SlackService,
+    private readonly llmService: LLMService,
+    private readonly githubService: GitHubService,
+  ) {}
+
+  async processSlackMessages(messages: SlackMessage[]): Promise<void> {
+    this.logger.log(`Processing ${messages.length} Slack messages`);
+
+    try {
+      // Group messages by conversation/thread
+      const conversations = this.groupSlackMessages(messages);
+
+      for (const conversation of conversations) {
+        await this.processConversation(conversation, 'slack');
+      }
+    } catch (error) {
+      this.logger.error('Failed to process Slack messages', error);
+      throw error;
+    }
+  }
+
+  async processJiraIssue(issue: JiraIssue): Promise<void> {
+    this.logger.log(`Processing Jira issue: ${issue.key}`);
+
+    try {
+      await this.processConversation([issue], 'jira');
+    } catch (error) {
+      this.logger.error(`Failed to process Jira issue ${issue.key}`, error);
+      throw error;
+    }
+  }
+
+  private async processConversation(
+    content: SlackMessage[] | JiraIssue[],
+    source: 'slack' | 'jira',
+  ): Promise<void> {
+    // Step 1: Prepare content for LLM processing
+    const contentText = this.prepareContentForLLM(content, source);
+    const context = this.extractContext(content, source);
+
+    // Step 2: Summarize content
+    const summaryRequest: SummaryRequest = {
+      content: contentText,
+      contentType: source,
+      context,
+    };
+
+    const summary = await this.llmService.summarizeContent(summaryRequest);
+    this.logger.log(`Generated summary for ${source} content`);
+
+    // Step 3: Classify content
+    const classificationRequest: ClassificationRequest = {
+      content: contentText,
+      availableTopics: this.availableTopics,
+      context: {
+        source,
+        metadata: context,
+      },
+    };
+
+    const classification = await this.llmService.classifyContent(classificationRequest);
+    this.logger.log(`Classified content as topic: ${classification.topic}`);
+
+    // Step 4: Check for existing document
+    const existingDocument = await this.githubService.findExistingDocument(
+      classification.topic,
+    );
+
+    let existingContent: string | undefined;
+    if (existingDocument) {
+      const fileContent = await this.githubService.getFileContent(
+        existingDocument.path,
+      );
+      if (fileContent && fileContent.content) {
+        existingContent = Buffer.from(fileContent.content, 'base64').toString('utf-8');
+      }
+    }
+
+    // Step 5: Generate document
+    const documentRequest: DocumentGenerationRequest = {
+      summary,
+      classification,
+      originalContent: {
+        source,
+        data: content,
+        timestamp: new Date().toISOString(),
+      },
+      existingDocument: existingContent,
+    };
+
+    const document = await this.llmService.generateDocument(documentRequest);
+    this.logger.log(`Generated document: ${document.title}`);
+
+    // Step 6: Create GitHub branch and file
+    const branchName = `knowledge-sync/${classification.topic}-${Date.now()}`;
+    await this.githubService.createBranch(branchName);
+
+    const filePath = await this.githubService.generateDocumentPath(
+      classification.topic,
+      document.title,
+    );
+
+    const commitMessage = document.isUpdate
+      ? `Update ${classification.topic} documentation: ${document.title}`
+      : `Add ${classification.topic} documentation: ${document.title}`;
+
+    await this.githubService.createOrUpdateFile(
+      filePath,
+      document.content,
+      commitMessage,
+      branchName,
+    );
+
+    // Step 7: Create Pull Request
+    const defaultReviewers = this.configService
+      .get<string>('DEFAULT_REVIEWERS', '')
+      .split(',')
+      .filter(Boolean);
+
+    const prTitle = document.isUpdate
+      ? `📝 Update: ${document.title}`
+      : `📄 New: ${document.title}`;
+
+    const prBody = this.generatePRDescription(document, summary, classification, source);
+
+    const pullRequest = await this.githubService.createPullRequest({
+      title: prTitle,
+      body: prBody,
+      head: branchName,
+      base: 'main',
+      reviewers: defaultReviewers,
+      labels: ['documentation', `topic:${classification.topic}`, `source:${source}`],
+    });
+
+    this.logger.log(`Created PR #${pullRequest.number}: ${pullRequest.url}`);
+  }
+
+  private groupSlackMessages(messages: SlackMessage[]): SlackMessage[][] {
+    const conversations: Map<string, SlackMessage[]> = new Map();
+
+    for (const message of messages) {
+      const key = message.threadTs || message.id;
+      
+      if (!conversations.has(key)) {
+        conversations.set(key, []);
+      }
+      
+      conversations.get(key)!.push(message);
+    }
+
+    return Array.from(conversations.values());
+  }
+
+  private prepareContentForLLM(
+    content: SlackMessage[] | JiraIssue[],
+    source: 'slack' | 'jira',
+  ): string {
+    if (source === 'slack') {
+      const messages = content as SlackMessage[];
+      return messages
+        .map(msg => `[${msg.user}]: ${msg.text}`)
+        .join('\n');
+    } else {
+      const issues = content as JiraIssue[];
+      const issue = issues[0]; // Single issue for Jira
+      
+      let text = `Title: ${issue.summary}\n`;
+      if (issue.description) {
+        text += `Description: ${issue.description}\n`;
+      }
+      
+      if (issue.comments.length > 0) {
+        text += '\nComments:\n';
+        text += issue.comments
+          .map(comment => `[${comment.author.displayName}]: ${comment.body}`)
+          .join('\n');
+      }
+      
+      return text;
+    }
+  }
+
+  private extractContext(
+    content: SlackMessage[] | JiraIssue[],
+    source: 'slack' | 'jira',
+  ): any {
+    if (source === 'slack') {
+      const messages = content as SlackMessage[];
+      const participants = [...new Set(messages.map(msg => msg.user))];
+      
+      return {
+        channel: messages[0]?.channel,
+        participants,
+        messageCount: messages.length,
+      };
+    } else {
+      const issues = content as JiraIssue[];
+      const issue = issues[0];
+      
+      const participants = [
+        issue.reporter.displayName,
+        ...(issue.assignee ? [issue.assignee.displayName] : []),
+        ...issue.comments.map(comment => comment.author.displayName),
+      ];
+      
+      return {
+        project: issue.project.key,
+        participants: [...new Set(participants)],
+        issueType: issue.issueType,
+        priority: issue.priority,
+        status: issue.status,
+        components: issue.components.map(c => c.name),
+        labels: issue.labels,
+      };
+    }
+  }
+
+  private generatePRDescription(
+    document: any,
+    summary: any,
+    classification: any,
+    source: string,
+  ): string {
+    return `
+## 📋 Summary
+
+${summary.summary}
+
+## 🏷️ Classification
+
+- **Topic**: ${classification.topic}
+- **Confidence**: ${(classification.confidence * 100).toFixed(1)}%
+- **Source**: ${source.toUpperCase()}
+
+## 🔑 Key Points
+
+${summary.keyPoints.map(point => `- ${point}`).join('\n')}
+
+## ✅ Decisions Made
+
+${summary.decisions.length > 0 
+  ? summary.decisions.map(decision => `- ${decision}`).join('\n')
+  : '_No specific decisions recorded_'
+}
+
+## 📝 Action Items
+
+${summary.actionItems.length > 0
+  ? summary.actionItems.map(item => `- ${item}`).join('\n')
+  : '_No action items identified_'
+}
+
+## 👥 Participants
+
+${summary.participants.map(participant => `- @${participant}`).join('\n')}
+
+## 🏷️ Tags
+
+${summary.tags.map(tag => `\`${tag}\``).join(' ')}
+
+${document.isUpdate ? `
+## 🔄 Changes Summary
+
+${document.changesSummary}
+` : ''}
+
+---
+
+*This PR was automatically generated by Knowledge Sync AI*
+`;
+  }
+} 
