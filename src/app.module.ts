@@ -8,7 +8,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 // Configuration
-import databaseConfig from './config/database.config';
+import { getDatabaseConfig } from './config/database.config';
 
 // Modules
 import { SlackModule } from './modules/slack/slack.module';
@@ -22,16 +22,11 @@ import { DocumentModule } from './modules/document/document.module';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
       envFilePath: ['.env.local', '.env'],
     }),
 
     // Database
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => configService.get('database'),
-      inject: [ConfigService],
-    }),
+    TypeOrmModule.forRoot(getDatabaseConfig()),
 
     // Scheduling
     ScheduleModule.forRoot(),

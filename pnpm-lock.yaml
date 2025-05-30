@@ -103,16 +103,16 @@ importers:
         specifier: ^4.17.17
         version: 4.17.22
       '@types/jest':
-        specifier: ^29.5.14
+        specifier: ^29.5.2
         version: 29.5.14
       '@types/node':
-        specifier: ^20.17.56
+        specifier: ^20.3.1
         version: 20.17.56
       '@types/pg':
         specifier: ^8.10.9
         version: 8.15.2
       '@types/supertest':
-        specifier: ^6.0.3
+        specifier: ^6.0.0
         version: 6.0.3
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.0.0
