@@ -17,12 +17,12 @@ jest.setTimeout(30000);
 // Mock environment variables for tests
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_HOST = 'localhost';
-process.env.DATABASE_PORT = '5432';
+process.env.DATABASE_PORT = '5433';
 process.env.DATABASE_USERNAME = 'test';
 process.env.DATABASE_PASSWORD = 'test';
 process.env.DATABASE_NAME = 'test_db';
 process.env.REDIS_HOST = 'localhost';
-process.env.REDIS_PORT = '6379';
+process.env.REDIS_PORT = '6380';
 process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
 process.env.SLACK_SIGNING_SECRET = 'test-signing-secret';
 process.env.JIRA_HOST = 'https://test.atlassian.net';

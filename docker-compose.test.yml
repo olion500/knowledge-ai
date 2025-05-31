@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  test-postgres:
+    image: postgres:15
+    container_name: knowledge-ai-test-postgres
+    environment:
+      POSTGRES_DB: test_db
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    command: postgres -c log_statement=all
+
+  test-redis:
+    image: redis:7-alpine
+    container_name: knowledge-ai-test-redis
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    restart: unless-stopped
+
+volumes:
+  test_postgres_data: 

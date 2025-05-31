@@ -120,8 +120,8 @@ Knowledge Sync AI automatically:
 
 4. **Set up the database**
    ```bash
-   npm run build
-   npm run start:prod
+   pnpm run build
+   pnpm run start:prod
    ```
 
 ## 🔧 Configuration
@@ -234,15 +234,50 @@ npm run test
 # Watch mode for development
 npm run test:watch
 
-# E2E tests
-npm run test:e2e
-
 # Test coverage
 npm run test:cov
 
 # Debug tests
 npm run test:debug
+
+# E2E tests (requires test database)
+npm run test:e2e
+
+# Complete E2E test cycle (start DB → run tests → cleanup)
+npm run test:e2e:full
 ```
+
+### E2E Testing Setup
+
+The e2e tests require a separate test database to avoid conflicts with your development environment. We've included a Docker Compose configuration specifically for testing.
+
+#### Test Database Management
+
+```bash
+# Start test database containers
+npm run test:db:up
+
+# Run e2e tests (database must be running)
+npm run test:e2e
+
+# Stop and cleanup test database
+npm run test:db:down
+
+# Automated: Start DB → Run tests → Cleanup (recommended)
+npm run test:e2e:full
+```
+
+#### Test Database Configuration
+
+The test setup uses:
+- **PostgreSQL**: Port 5433 (to avoid conflicts with dev DB on 5432)
+- **Redis**: Port 6380 (to avoid conflicts with dev Redis on 6379)
+- **Database**: `test_db` with user `test` / password `test`
+
+Configuration files:
+- `docker-compose.test.yml` - Test database containers
+- `test/setup.ts` - Test environment configuration
+- `test/jest-e2e.json` - Jest E2E configuration
 
 ### Test Structure
 
@@ -262,8 +297,10 @@ src/
 └── app.service.spec.ts
 
 test/
-├── app.e2e-spec.ts
-└── setup.ts
+├── app.e2e-spec.ts          # E2E test cases
+├── jest-e2e.json           # Jest E2E configuration
+├── setup.ts                # Test environment setup
+└── docker-compose.test.yml # Test database containers
 ```
 
 ### Test Coverage
@@ -271,7 +308,7 @@ test/
 The test suite covers:
 - **Unit Tests**: Individual service and controller methods
 - **Integration Tests**: Module interactions and workflows
-- **E2E Tests**: Complete API endpoints and workflows
+- **E2E Tests**: Complete API endpoints and workflows with real database
 - **Mocking**: External services (Slack, GitHub, OpenAI, Jira)
 
 ### Test Configuration
@@ -279,6 +316,7 @@ The test suite covers:
 Tests are configured with:
 - **Jest**: Testing framework with TypeScript support
 - **Supertest**: HTTP assertion library for E2E tests
+- **Docker**: Isolated test database environment
 - **Mock Services**: All external APIs are mocked for reliable testing
 - **Coverage Reports**: Generated in `coverage/` directory
 
@@ -288,7 +326,8 @@ When adding new features:
 1. Write unit tests for services and controllers
 2. Mock external dependencies
 3. Test both success and error scenarios
-4. Maintain test coverage above 80%
+4. Add E2E tests for new API endpoints
+5. Maintain test coverage above 80%
 
 Example test structure:
 ```typescript
@@ -308,6 +347,36 @@ describe('ServiceName', () => {
     it('should handle error case', async () => {
       // Test error handling
     });
+  });
+});
+```
+
+#### E2E Test Example
+
+```typescript
+describe('AppController (e2e)', () => {
+  let app: INestApplication;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('/health (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('status', 'ok');
+      });
   });
 });
 ```
