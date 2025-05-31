@@ -75,12 +75,19 @@ export class SlackController {
 
   private async processSlackEvent(payload: SlackEventPayload): Promise<void> {
     const { event } = payload;
+    
+    this.logger.log(`Processing event type: ${event.type}`);
+    this.logger.log(`Event details:`, JSON.stringify(event, null, 2));
 
     // Only process message events with specific reactions or keywords
     if (event.type === 'reaction_added') {
+      this.logger.log('Processing reaction_added event');
       await this.handleReactionAdded(event as any);
     } else if (event.type === 'message') {
+      this.logger.log('Processing message event');
       await this.handleMessage(event);
+    } else {
+      this.logger.log(`Unhandled event type: ${event.type}`);
     }
   }
 
@@ -88,16 +95,30 @@ export class SlackController {
     // Check if it's a reaction we care about (e.g., 📝, 📋, 🔖)
     const importantReactions = ['memo', 'clipboard', 'bookmark_tabs'];
     
+    this.logger.log(`Reaction added: ${event.reaction}`);
+    
     if (importantReactions.includes(event.reaction)) {
+      this.logger.log(`Important reaction detected: ${event.reaction}, processing messages...`);
+      
+      // Get recent messages around the reacted message
       const messages = await this.slackService.getChannelHistory(
         event.item.channel,
-        event.item.ts,
-        (parseFloat(event.item.ts) + 1).toString(),
+        undefined, // Get recent messages
+        undefined,
       );
 
+      this.logger.log(`Found ${messages.length} messages to process`);
+
       if (messages.length > 0) {
-        await this.documentService.processSlackMessages(messages);
+        // Filter to get the specific message and some context
+        const targetMessage = messages.find(m => m.id === event.item.ts);
+        const messagesToProcess = targetMessage ? [targetMessage] : messages.slice(0, 5);
+        
+        await this.documentService.processSlackMessages(messagesToProcess);
+        this.logger.log(`Processed ${messagesToProcess.length} messages successfully`);
       }
+    } else {
+      this.logger.log(`Reaction ${event.reaction} not in important list, ignoring`);
     }
   }
 
@@ -106,18 +127,31 @@ export class SlackController {
     const keywords = ['decision', 'action item', 'todo', 'follow up', 'next steps'];
     const messageText = event.text?.toLowerCase() || '';
     
+    this.logger.log(`Message text: "${event.text}"`);
+    this.logger.log(`Checking for keywords: ${keywords.join(', ')}`);
+    
     const hasKeyword = keywords.some(keyword => messageText.includes(keyword));
     
     if (hasKeyword) {
+      this.logger.log('Important keyword found, processing messages...');
+      
+      // Get recent messages including the current one
       const messages = await this.slackService.getChannelHistory(
         event.channel,
-        event.ts,
-        (parseFloat(event.ts) + 1).toString(),
+        undefined, // Get recent messages
+        undefined,
       );
 
+      this.logger.log(`Found ${messages.length} messages to process`);
+
       if (messages.length > 0) {
-        await this.documentService.processSlackMessages(messages);
+        // Find the specific message and include some context (5 recent messages)
+        const messagesToProcess = messages.slice(0, 5);
+        await this.documentService.processSlackMessages(messagesToProcess);
+        this.logger.log(`Processed ${messagesToProcess.length} messages successfully`);
       }
+    } else {
+      this.logger.log('No important keywords found, ignoring message');
     }
   }
 } 
