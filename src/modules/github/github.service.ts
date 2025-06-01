@@ -163,37 +163,62 @@ export class GitHubService {
         base: pullRequest.base,
       });
 
-      // Add reviewers if specified
-      if (pullRequest.reviewers && pullRequest.reviewers.length > 0) {
-        await this.octokit.pulls.requestReviewers({
-          owner: this.defaultRepo.owner,
-          repo: this.defaultRepo.repo,
-          pull_number: data.number,
-          reviewers: pullRequest.reviewers,
-        });
-      }
-
-      // Add assignees if specified
-      if (pullRequest.assignees && pullRequest.assignees.length > 0) {
-        await this.octokit.issues.addAssignees({
-          owner: this.defaultRepo.owner,
-          repo: this.defaultRepo.repo,
-          issue_number: data.number,
-          assignees: pullRequest.assignees,
-        });
-      }
-
-      // Add labels if specified
-      if (pullRequest.labels && pullRequest.labels.length > 0) {
-        await this.octokit.issues.addLabels({
-          owner: this.defaultRepo.owner,
-          repo: this.defaultRepo.repo,
-          issue_number: data.number,
-          labels: pullRequest.labels,
-        });
-      }
-
       this.logger.log(`Created PR #${data.number}: ${pullRequest.title}`);
+
+      // Add reviewers if specified (handle failures gracefully)
+      if (pullRequest.reviewers && pullRequest.reviewers.length > 0) {
+        try {
+          await this.octokit.pulls.requestReviewers({
+            owner: this.defaultRepo.owner,
+            repo: this.defaultRepo.repo,
+            pull_number: data.number,
+            reviewers: pullRequest.reviewers,
+          });
+          this.logger.log(`Added reviewers to PR #${data.number}: ${pullRequest.reviewers.join(', ')}`);
+        } catch (reviewerError) {
+          this.logger.warn(`Failed to add reviewers to PR #${data.number}. Reviewers must be collaborators of the repository.`, {
+            requestedReviewers: pullRequest.reviewers,
+            error: reviewerError.message,
+          });
+        }
+      }
+
+      // Add assignees if specified (handle failures gracefully)
+      if (pullRequest.assignees && pullRequest.assignees.length > 0) {
+        try {
+          await this.octokit.issues.addAssignees({
+            owner: this.defaultRepo.owner,
+            repo: this.defaultRepo.repo,
+            issue_number: data.number,
+            assignees: pullRequest.assignees,
+          });
+          this.logger.log(`Added assignees to PR #${data.number}: ${pullRequest.assignees.join(', ')}`);
+        } catch (assigneeError) {
+          this.logger.warn(`Failed to add assignees to PR #${data.number}. Assignees must be collaborators of the repository.`, {
+            requestedAssignees: pullRequest.assignees,
+            error: assigneeError.message,
+          });
+        }
+      }
+
+      // Add labels if specified (handle failures gracefully)
+      if (pullRequest.labels && pullRequest.labels.length > 0) {
+        try {
+          await this.octokit.issues.addLabels({
+            owner: this.defaultRepo.owner,
+            repo: this.defaultRepo.repo,
+            issue_number: data.number,
+            labels: pullRequest.labels,
+          });
+          this.logger.log(`Added labels to PR #${data.number}: ${pullRequest.labels.join(', ')}`);
+        } catch (labelError) {
+          this.logger.warn(`Failed to add labels to PR #${data.number}`, {
+            requestedLabels: pullRequest.labels,
+            error: labelError.message,
+          });
+        }
+      }
+
       return {
         number: data.number,
         url: data.html_url,

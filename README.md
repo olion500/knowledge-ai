@@ -87,36 +87,7 @@ Knowledge Sync AI automatically:
    cp env.template .env
    ```
    
-   Edit `.env` with your configuration:
-   ```env
-   # Database
-   DATABASE_HOST=localhost
-   DATABASE_PORT=5432
-   DATABASE_USERNAME=postgres
-   DATABASE_PASSWORD=your_password
-   DATABASE_NAME=knowledge_sync_ai
-
-   # Redis
-   REDIS_HOST=localhost
-   REDIS_PORT=6379
-
-   # Slack
-   SLACK_BOT_TOKEN=xoxb-your-bot-token
-   SLACK_SIGNING_SECRET=your-signing-secret
-
-   # Jira
-   JIRA_HOST=https://your-domain.atlassian.net
-   JIRA_USERNAME=your-email@example.com
-   JIRA_API_TOKEN=your-jira-api-token
-
-   # GitHub
-   GITHUB_TOKEN=ghp_your-github-token
-   GITHUB_OWNER=your-github-username
-   GITHUB_REPO=knowledge-docs
-
-   # OpenAI
-   OPENAI_API_KEY=sk-your-openai-api-key
-   ```
+   Then edit `.env` with your specific configuration values.
 
 4. **Set up the database**
    ```bash
@@ -148,8 +119,51 @@ Knowledge Sync AI automatically:
 ### GitHub Repository Setup
 
 1. Create a repository for documentation
-2. Generate a Personal Access Token with `repo` scope
+2. Generate a Personal Access Token with required permissions (see below)
 3. Set up branch protection rules for `main` branch
+4. Add collaborators who will review generated documentation
+
+#### Repository Collaborators
+
+For the system to automatically assign reviewers to Pull Requests, you need to:
+
+1. **Add Collaborators to Repository**:
+   - Go to your GitHub repository → Settings → Collaborators
+   - Add team members who will review documentation
+   - Each collaborator needs at least "Write" access
+
+2. **Configure Environment Variables**:
+   ```bash
+   # Optional: Comma-separated list of GitHub usernames
+   DEFAULT_REVIEWERS=username1,username2,username3
+   ```
+
+3. **Important Notes**:
+   - ⚠️ Only repository collaborators can be assigned as reviewers
+   - ✅ If reviewer assignment fails, the PR will still be created successfully
+   - 💡 Leave `DEFAULT_REVIEWERS` empty to skip automatic reviewer assignment
+
+#### GitHub Token Permissions
+
+Use **Fine-grained Personal Access Tokens** for better security with minimal required permissions:
+
+**Setup Steps:**
+1. Go to GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens**
+2. Click **Generate new token**
+3. Configure:
+   - **Token name**: `Knowledge Sync AI`
+   - **Expiration**: Set appropriate expiration (e.g., 90 days)
+   - **Repository access**: Select your documentation repository
+   - **Permissions** (Repository level):
+     - **Contents**: `Read and write` (create/update files)
+     - **Metadata**: `Read` (access repository info)
+     - **Pull requests**: `Write` (create PRs)
+
+**Why Fine-grained Tokens?**
+- ✅ More secure with minimal permissions
+- ✅ Limited to specific repositories
+- ✅ Better audit trail
+- ✅ Organization approval workflow support
 
 ## 🎮 Usage
 

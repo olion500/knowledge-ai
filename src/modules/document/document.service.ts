@@ -122,48 +122,62 @@ export class DocumentService {
     const document = await this.llmService.generateDocument(documentRequest);
     this.logger.log(`Generated document: ${document.title}`);
 
-    // Step 6: Create GitHub branch and file
-    const branchName = `knowledge-sync/${classification.topic}-${Date.now()}`;
-    await this.githubService.createBranch(branchName);
+    // Step 6: Create GitHub branch and file (with error handling)
+    try {
+      const branchName = `knowledge-sync/${classification.topic}-${Date.now()}`;
+      await this.githubService.createBranch(branchName);
 
-    const filePath = await this.githubService.generateDocumentPath(
-      classification.topic,
-      document.title,
-    );
+      const filePath = await this.githubService.generateDocumentPath(
+        classification.topic,
+        document.title,
+      );
 
-    const commitMessage = document.isUpdate
-      ? `Update ${classification.topic} documentation: ${document.title}`
-      : `Add ${classification.topic} documentation: ${document.title}`;
+      const commitMessage = document.isUpdate
+        ? `Update ${classification.topic} documentation: ${document.title}`
+        : `Add ${classification.topic} documentation: ${document.title}`;
 
-    await this.githubService.createOrUpdateFile(
-      filePath,
-      document.content,
-      commitMessage,
-      branchName,
-    );
+      await this.githubService.createOrUpdateFile(
+        filePath,
+        document.content,
+        commitMessage,
+        branchName,
+      );
 
-    // Step 7: Create Pull Request
-    const defaultReviewers = this.configService
-      .get<string>('DEFAULT_REVIEWERS', '')
-      .split(',')
-      .filter(Boolean);
+      // Step 7: Create Pull Request
+      const defaultReviewers = this.configService
+        .get<string>('DEFAULT_REVIEWERS', '')
+        .split(',')
+        .map(reviewer => reviewer.trim())
+        .filter(Boolean);
 
-    const prTitle = document.isUpdate
-      ? `📝 Update: ${document.title}`
-      : `📄 New: ${document.title}`;
+      this.logger.log(`Configured reviewers: ${defaultReviewers.length > 0 ? defaultReviewers.join(', ') : 'none'}`);
 
-    const prBody = this.generatePRDescription(document, summary, classification, source);
+      const prTitle = document.isUpdate
+        ? `📝 Update: ${document.title}`
+        : `📄 New: ${document.title}`;
 
-    const pullRequest = await this.githubService.createPullRequest({
-      title: prTitle,
-      body: prBody,
-      head: branchName,
-      base: 'main',
-      reviewers: defaultReviewers,
-      labels: ['documentation', `topic:${classification.topic}`, `source:${source}`],
-    });
+      const prBody = this.generatePRDescription(document, summary, classification, source);
 
-    this.logger.log(`Created PR #${pullRequest.number}: ${pullRequest.url}`);
+      const pullRequest = await this.githubService.createPullRequest({
+        title: prTitle,
+        body: prBody,
+        head: branchName,
+        base: 'main',
+        reviewers: defaultReviewers.length > 0 ? defaultReviewers : undefined,
+        labels: ['documentation', `topic:${classification.topic}`, `source:${source}`],
+      });
+
+      this.logger.log(`Created PR #${pullRequest.number}: ${pullRequest.url}`);
+    } catch (githubError) {
+      this.logger.error('GitHub operations failed, but document processing completed successfully', githubError);
+      this.logger.warn('Document was generated but not pushed to GitHub. Please check GitHub configuration and permissions.');
+      
+      // Log the document content for manual handling if needed
+      this.logger.log(`Generated document content:\n${document.content}`);
+      
+      // Don't throw the error - allow the process to complete successfully
+      // The LLM processing was successful even if GitHub integration failed
+    }
   }
 
   private groupSlackMessages(messages: SlackMessage[]): SlackMessage[][] {

@@ -1,20 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { LLMService } from './modules/llm/llm.service';
 
 describe('AppController', () => {
   let appController: AppController;
   let appService: jest.Mocked<AppService>;
+  let mockLLMService: jest.Mocked<LLMService>;
 
   beforeEach(async () => {
+    mockLLMService = {
+      checkProviderAvailability: jest.fn(),
+    } as any;
+
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
+        AppService,
         {
-          provide: AppService,
-          useValue: {
-            getHello: jest.fn(),
-          },
+          provide: LLMService,
+          useValue: mockLLMService,
         },
       ],
     }).compile();
@@ -23,45 +28,82 @@ describe('AppController', () => {
     appService = app.get(AppService);
   });
 
-  describe('getHello', () => {
-    it('should return "Hello World!"', () => {
-      const result = 'Hello World!';
-      appService.getHello.mockReturnValue(result);
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-      expect(appController.getHello()).toBe(result);
-      expect(appService.getHello).toHaveBeenCalled();
+  describe('root', () => {
+    it('should return "Hello World!"', () => {
+      expect(appController.getHello()).toBe('Hello World!');
     });
   });
 
-  describe('getHealth', () => {
+  describe('health', () => {
     it('should return health status', () => {
-      const mockDate = new Date('2024-01-01T00:00:00.000Z');
-      const mockUptime = 3600; // 1 hour
-
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as any);
-      jest.spyOn(process, 'uptime').mockReturnValue(mockUptime);
-
       const result = appController.getHealth();
+      
+      expect(result).toEqual({
+        status: 'ok',
+        timestamp: expect.any(String),
+        uptime: expect.any(Number),
+      });
+    });
+  });
+
+  describe('LLM health', () => {
+    it('should return LLM provider health when available', async () => {
+      const mockProviderStatus = {
+        available: true,
+        provider: 'OpenAIProvider',
+        model: 'gpt-4-turbo-preview',
+      };
+
+      mockLLMService.checkProviderAvailability.mockResolvedValue(mockProviderStatus);
+
+      const result = await appController.getLLMHealth();
 
       expect(result).toEqual({
         status: 'ok',
-        timestamp: '2024-01-01T00:00:00.000Z',
-        uptime: 3600,
+        timestamp: expect.any(String),
+        available: true,
+        provider: 'OpenAIProvider',
+        model: 'gpt-4-turbo-preview',
       });
 
-      jest.restoreAllMocks();
+      expect(mockLLMService.checkProviderAvailability).toHaveBeenCalled();
     });
 
-    it('should return current timestamp and uptime', () => {
-      const result = appController.getHealth();
+    it('should return LLM provider health when unavailable', async () => {
+      const mockProviderStatus = {
+        available: false,
+        provider: 'OllamaProvider',
+        model: 'llama2',
+      };
 
-      expect(result).toHaveProperty('status', 'ok');
-      expect(result).toHaveProperty('timestamp');
-      expect(result).toHaveProperty('uptime');
-      expect(typeof result.timestamp).toBe('string');
-      expect(typeof result.uptime).toBe('number');
-      expect(new Date(result.timestamp)).toBeInstanceOf(Date);
-      expect(result.uptime).toBeGreaterThanOrEqual(0);
+      mockLLMService.checkProviderAvailability.mockResolvedValue(mockProviderStatus);
+
+      const result = await appController.getLLMHealth();
+
+      expect(result).toEqual({
+        status: 'unavailable',
+        timestamp: expect.any(String),
+        available: false,
+        provider: 'OllamaProvider',
+        model: 'llama2',
+      });
+    });
+
+    it('should handle LLM service errors', async () => {
+      const error = new Error('LLM service error');
+      mockLLMService.checkProviderAvailability.mockRejectedValue(error);
+
+      const result = await appController.getLLMHealth();
+
+      expect(result).toEqual({
+        status: 'error',
+        timestamp: expect.any(String),
+        error: 'LLM service error',
+      });
     });
   });
 });

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
+import { LLMProvider } from '../../common/interfaces/llm-provider.interface';
+import { LLMProviderFactory } from './providers/llm-provider.factory';
 import {
   SummaryRequest,
   SummaryResponse,
@@ -13,40 +14,31 @@ import {
 @Injectable()
 export class LLMService {
   private readonly logger = new Logger(LLMService.name);
-  private readonly openai: OpenAI;
-  private readonly model: string;
-  private readonly maxTokens: number;
-  private readonly temperature: number;
+  private readonly provider: LLMProvider;
 
-  constructor(private readonly configService: ConfigService) {
-    this.openai = new OpenAI({
-      apiKey: this.configService.get<string>('OPENAI_API_KEY'),
-    });
-    this.model = this.configService.get<string>('OPENAI_MODEL') || 'gpt-4-turbo-preview';
-    this.maxTokens = this.configService.get<number>('MAX_TOKENS') || 4000;
-    this.temperature = this.configService.get<number>('TEMPERATURE') || 0.3;
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly llmProviderFactory: LLMProviderFactory,
+  ) {
+    this.provider = this.llmProviderFactory.createProvider();
   }
 
   async summarizeContent(request: SummaryRequest): Promise<SummaryResponse> {
     try {
       const prompt = this.buildSummaryPrompt(request);
       
-      const completion = await this.openai.chat.completions.create({
-        model: this.model,
+      const completion = await this.provider.createCompletion({
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: this.maxTokens,
-        temperature: this.temperature,
-        response_format: { type: 'json_object' },
+        responseFormat: { type: 'json_object' },
       });
 
-      const response = completion.choices[0].message.content;
-      if (!response) {
-        throw new Error('No response from OpenAI');
+      if (!completion.content) {
+        throw new Error('No response from LLM provider');
       }
 
-      const parsed = JSON.parse(response) as SummaryResponse;
+      const parsed = JSON.parse(completion.content) as SummaryResponse;
       
-      this.logger.log(`Summarized ${request.contentType} content successfully`);
+      this.logger.log(`Summarized ${request.contentType} content successfully using ${this.provider.getModel()}`);
       return parsed;
     } catch (error) {
       this.logger.error('Failed to summarize content', error);
@@ -58,22 +50,19 @@ export class LLMService {
     try {
       const prompt = this.buildClassificationPrompt(request);
       
-      const completion = await this.openai.chat.completions.create({
-        model: this.model,
+      const completion = await this.provider.createCompletion({
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1000,
-        temperature: this.temperature,
-        response_format: { type: 'json_object' },
+        maxTokens: 1000,
+        responseFormat: { type: 'json_object' },
       });
 
-      const response = completion.choices[0].message.content;
-      if (!response) {
-        throw new Error('No response from OpenAI');
+      if (!completion.content) {
+        throw new Error('No response from LLM provider');
       }
 
-      const parsed = JSON.parse(response) as ClassificationResponse;
+      const parsed = JSON.parse(completion.content) as ClassificationResponse;
       
-      this.logger.log(`Classified content as topic: ${parsed.topic}`);
+      this.logger.log(`Classified content as topic: ${parsed.topic} using ${this.provider.getModel()}`);
       return parsed;
     } catch (error) {
       this.logger.error('Failed to classify content', error);
@@ -85,27 +74,32 @@ export class LLMService {
     try {
       const prompt = this.buildDocumentGenerationPrompt(request);
       
-      const completion = await this.openai.chat.completions.create({
-        model: this.model,
+      const completion = await this.provider.createCompletion({
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: this.maxTokens,
-        temperature: this.temperature,
-        response_format: { type: 'json_object' },
+        responseFormat: { type: 'json_object' },
       });
 
-      const response = completion.choices[0].message.content;
-      if (!response) {
-        throw new Error('No response from OpenAI');
+      if (!completion.content) {
+        throw new Error('No response from LLM provider');
       }
 
-      const parsed = JSON.parse(response) as DocumentGenerationResponse;
+      const parsed = JSON.parse(completion.content) as DocumentGenerationResponse;
       
-      this.logger.log(`Generated document: ${parsed.title}`);
+      this.logger.log(`Generated document: ${parsed.title} using ${this.provider.getModel()}`);
       return parsed;
     } catch (error) {
       this.logger.error('Failed to generate document', error);
       throw error;
     }
+  }
+
+  async checkProviderAvailability(): Promise<{ available: boolean; provider: string; model: string }> {
+    const available = await this.provider.isAvailable();
+    return {
+      available,
+      provider: this.provider.constructor.name,
+      model: this.provider.getModel(),
+    };
   }
 
   private buildSummaryPrompt(request: SummaryRequest): string {
