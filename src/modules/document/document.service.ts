@@ -66,8 +66,8 @@ export class DocumentService {
     source: 'slack' | 'jira',
   ): Promise<void> {
     // Step 1: Prepare content for LLM processing
-    const contentText = this.prepareContentForLLM(content, source);
-    const context = this.extractContext(content, source);
+    const contentText = await this.prepareContentForLLM(content, source);
+    const context = await this.extractContext(content, source);
 
     // Step 2: Summarize content
     const summaryRequest: SummaryRequest = {
@@ -196,15 +196,26 @@ export class DocumentService {
     return Array.from(conversations.values());
   }
 
-  private prepareContentForLLM(
+  private async prepareContentForLLM(
     content: SlackMessage[] | JiraIssue[],
     source: 'slack' | 'jira',
-  ): string {
+  ): Promise<string> {
     if (source === 'slack') {
       const messages = content as SlackMessage[];
-      return messages
-        .map(msg => `[${msg.user}]: ${msg.text}`)
-        .join('\n');
+      const resolvedMessages: string[] = [];
+      
+      for (const msg of messages) {
+        try {
+          const userInfo = await this.slackService.getUserInfo(msg.user);
+          const userName = userInfo?.realName || userInfo?.name || msg.user;
+          resolvedMessages.push(`[${userName}]: ${msg.text}`);
+        } catch (error) {
+          this.logger.warn(`Failed to resolve user ${msg.user} in message content`, error);
+          resolvedMessages.push(`[${msg.user}]: ${msg.text}`);
+        }
+      }
+      
+      return resolvedMessages.join('\n');
     } else {
       const issues = content as JiraIssue[];
       const issue = issues[0]; // Single issue for Jira
@@ -225,13 +236,16 @@ export class DocumentService {
     }
   }
 
-  private extractContext(
+  private async extractContext(
     content: SlackMessage[] | JiraIssue[],
     source: 'slack' | 'jira',
-  ): any {
+  ): Promise<any> {
     if (source === 'slack') {
       const messages = content as SlackMessage[];
-      const participants = [...new Set(messages.map(msg => msg.user))];
+      const userIds = [...new Set(messages.map(msg => msg.user))];
+      
+      // Resolve user IDs to real names
+      const participants = await this.resolveSlackUserNames(userIds);
       
       return {
         channel: messages[0]?.channel,
@@ -258,6 +272,27 @@ export class DocumentService {
         labels: issue.labels,
       };
     }
+  }
+
+  private async resolveSlackUserNames(userIds: string[]): Promise<string[]> {
+    const names: string[] = [];
+    
+    for (const userId of userIds) {
+      try {
+        const userInfo = await this.slackService.getUserInfo(userId);
+        if (userInfo) {
+          // Prefer real name, fallback to username, then user ID
+          names.push(userInfo.realName || userInfo.name || userId);
+        } else {
+          names.push(userId);
+        }
+      } catch (error) {
+        this.logger.warn(`Failed to resolve user ${userId}, using ID instead`, error);
+        names.push(userId);
+      }
+    }
+    
+    return names;
   }
 
   private generatePRDescription(

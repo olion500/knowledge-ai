@@ -35,6 +35,7 @@ describe('DocumentService', () => {
             getChannelHistory: jest.fn(),
             getMessagesWithReaction: jest.fn(),
             getMessagesWithKeywords: jest.fn(),
+            getUserInfo: jest.fn(),
           },
         },
         {
@@ -102,7 +103,7 @@ describe('DocumentService', () => {
         keyPoints: ['Feature implementation decision needed'],
         decisions: ['Go with option A'],
         actionItems: ['Implement option A'],
-        participants: ['U1234567890', 'U0987654321'],
+        participants: ['John Doe', 'Jane Smith'],
         tags: ['feature', 'decision'],
       };
 
@@ -121,10 +122,19 @@ describe('DocumentService', () => {
           tags: ['feature', 'decision'],
           lastUpdated: '2024-01-01T00:00:00.000Z',
           sources: ['slack'],
-          participants: ['U1234567890', 'U0987654321'],
+          participants: ['John Doe', 'Jane Smith'],
         },
         isUpdate: false,
       };
+
+      // Mock user info responses
+      slackService.getUserInfo.mockImplementation((userId: string) => {
+        const userMap = {
+          'U1234567890': { id: 'U1234567890', name: 'john.doe', realName: 'John Doe', isBot: false },
+          'U0987654321': { id: 'U0987654321', name: 'jane.smith', realName: 'Jane Smith', isBot: false },
+        };
+        return Promise.resolve(userMap[userId] || null);
+      });
 
       llmService.summarizeContent.mockResolvedValue(mockSummary);
       llmService.classifyContent.mockResolvedValue(mockClassification);
@@ -141,23 +151,23 @@ describe('DocumentService', () => {
       await service.processSlackMessages(mockMessages);
 
       expect(llmService.summarizeContent).toHaveBeenCalledWith({
-        content: '[U1234567890]: We need to decide on the new feature implementation\n[U0987654321]: I agree, lets go with option A',
+        content: '[John Doe]: We need to decide on the new feature implementation\n[Jane Smith]: I agree, lets go with option A',
         contentType: 'slack',
         context: {
           channel: 'C1234567890',
-          participants: ['U1234567890', 'U0987654321'],
+          participants: ['John Doe', 'Jane Smith'],
           messageCount: 2,
         },
       });
 
       expect(llmService.classifyContent).toHaveBeenCalledWith({
-        content: '[U1234567890]: We need to decide on the new feature implementation\n[U0987654321]: I agree, lets go with option A',
+        content: '[John Doe]: We need to decide on the new feature implementation\n[Jane Smith]: I agree, lets go with option A',
         availableTopics: expect.arrayContaining(['product-planning', 'technical-architecture']),
         context: {
           source: 'slack',
           metadata: {
             channel: 'C1234567890',
-            participants: ['U1234567890', 'U0987654321'],
+            participants: ['John Doe', 'Jane Smith'],
             messageCount: 2,
           },
         },
@@ -317,7 +327,7 @@ describe('DocumentService', () => {
   });
 
   describe('prepareContentForLLM', () => {
-    it('should format slack messages correctly', () => {
+    it('should format slack messages correctly', async () => {
       const mockMessages: SlackMessage[] = [
         {
           id: '1',
@@ -335,12 +345,21 @@ describe('DocumentService', () => {
         },
       ];
 
-      const result = (service as any).prepareContentForLLM(mockMessages, 'slack');
+      // Mock user info responses
+      slackService.getUserInfo.mockImplementation((userId: string) => {
+        const userMap = {
+          'U1': { id: 'U1', name: 'user1', realName: 'User One', isBot: false },
+          'U2': { id: 'U2', name: 'user2', realName: 'User Two', isBot: false },
+        };
+        return Promise.resolve(userMap[userId] || null);
+      });
 
-      expect(result).toBe('[U1]: Hello\n[U2]: World');
+      const result = await (service as any).prepareContentForLLM(mockMessages, 'slack');
+
+      expect(result).toBe('[User One]: Hello\n[User Two]: World');
     });
 
-    it('should format jira issue correctly', () => {
+    it('should format jira issue correctly', async () => {
       const mockIssue: JiraIssue = {
         id: 'ISSUE-123',
         key: 'PROJ-123',
@@ -389,7 +408,7 @@ describe('DocumentService', () => {
         ],
       };
 
-      const result = (service as any).prepareContentForLLM([mockIssue], 'jira');
+      const result = await (service as any).prepareContentForLLM([mockIssue], 'jira');
 
       expect(result).toContain('Title: Test Issue');
       expect(result).toContain('Description: Test Description');

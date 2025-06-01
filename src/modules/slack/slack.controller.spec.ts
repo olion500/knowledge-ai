@@ -87,8 +87,8 @@ describe('SlackController', () => {
       expect(result).toEqual({});
       expect(slackService.getChannelHistory).toHaveBeenCalledWith(
         'C1234567890',
-        '1234567890.123456',
-        '1234567891.123456',
+        undefined,
+        undefined,
       );
       expect(documentService.processSlackMessages).toHaveBeenCalled();
     });
