@@ -35,6 +35,11 @@ describe('SlackController', () => {
     documentService = module.get(DocumentService);
   });
 
+  afterEach(() => {
+    // Clean up any intervals to prevent Jest hanging
+    (controller as any).onDestroy?.();
+  });
+
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
@@ -167,6 +172,50 @@ describe('SlackController', () => {
       expect(result).toEqual({});
       expect(slackService.getChannelHistory).not.toHaveBeenCalled();
       expect(documentService.processSlackMessages).not.toHaveBeenCalled();
+    });
+
+    it('should prevent duplicate event processing', async () => {
+      const payload: SlackEventPayload = {
+        type: 'event_callback',
+        token: 'test-token',
+        event: {
+          type: 'message',
+          channel: 'C1234567890',
+          user: 'U1234567890',
+          text: 'This is a decision we need to make',
+          ts: '1234567890.123456',
+          eventTs: '1234567890.123456',
+          channelType: 'channel',
+        },
+        teamId: 'T1234567890',
+        apiAppId: 'A1234567890',
+        eventId: 'Ev1234567890',
+        eventTime: 1234567890,
+      };
+
+      slackService.getChannelHistory.mockResolvedValue([
+        {
+          id: '1234567890.123456',
+          channel: 'C1234567890',
+          user: 'U1234567890',
+          text: 'This is a decision we need to make',
+          timestamp: '1234567890.123456',
+        },
+      ]);
+
+      documentService.processSlackMessages.mockResolvedValue();
+
+      // Process the event first time
+      const result1 = await controller.handleSlackEvent(payload);
+      expect(result1).toEqual({});
+      expect(slackService.getChannelHistory).toHaveBeenCalledTimes(1);
+      expect(documentService.processSlackMessages).toHaveBeenCalledTimes(1);
+
+      // Process the same event second time - should be skipped
+      const result2 = await controller.handleSlackEvent(payload);
+      expect(result2).toEqual({});
+      expect(slackService.getChannelHistory).toHaveBeenCalledTimes(1); // Still 1, not 2
+      expect(documentService.processSlackMessages).toHaveBeenCalledTimes(1); // Still 1, not 2
     });
   });
 

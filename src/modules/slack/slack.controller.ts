@@ -6,11 +6,19 @@ import { SlackEventPayload } from '../../common/interfaces/slack.interface';
 @Controller('slack')
 export class SlackController {
   private readonly logger = new Logger(SlackController.name);
+  private readonly processedEvents = new Map<string, number>(); // eventId -> timestamp
+  private readonly EVENT_CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+  private cleanupInterval?: NodeJS.Timeout;
 
   constructor(
     private readonly slackService: SlackService,
     private readonly documentService: DocumentService,
-  ) {}
+  ) {
+    // Clean up old events every 30 minutes (only in non-test environment)
+    if (process.env.NODE_ENV !== 'test') {
+      this.cleanupInterval = setInterval(() => this.cleanupOldEvents(), 30 * 60 * 1000);
+    }
+  }
 
   @Post('events')
   @HttpCode(200)
@@ -22,8 +30,20 @@ export class SlackController {
       return { challenge: (payload as any).challenge };
     }
 
-    // Handle message events
+    // Handle message events with duplicate prevention
     if (payload.type === 'event_callback' && payload.event) {
+      // Create a unique identifier for this event
+      const eventKey = payload.eventId || `${payload.event.type}_${payload.event.eventTs || payload.event.ts}`;
+      
+      // Check if we've already processed this event
+      if (this.processedEvents.has(eventKey)) {
+        this.logger.log(`Duplicate event detected, skipping: ${eventKey}`);
+        return {};
+      }
+
+      // Mark this event as processed
+      this.processedEvents.set(eventKey, Date.now());
+      
       await this.processSlackEvent(payload);
     }
 
@@ -152,6 +172,23 @@ export class SlackController {
       }
     } else {
       this.logger.log('No important keywords found, ignoring message');
+    }
+  }
+
+  private cleanupOldEvents(): void {
+    const now = Date.now();
+    this.processedEvents.forEach((timestamp, eventId) => {
+      if (now - timestamp > this.EVENT_CACHE_DURATION) {
+        this.processedEvents.delete(eventId);
+      }
+    });
+  }
+
+  // Method to clean up resources (useful for testing)
+  onDestroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = undefined;
     }
   }
 } 
