@@ -173,7 +173,7 @@ ${request.existingDocument}
 ` : '';
 
     return `
-You are an AI assistant that generates markdown documentation from summarized content.
+You are an AI assistant that generates comprehensive markdown documentation from summarized content.
 
 ${existingDocSection}
 
@@ -202,14 +202,27 @@ Please provide a JSON response with the following structure:
   ${isUpdate ? '"changesSummary": "Summary of what changed",' : ''}
 }
 
-The markdown content should include:
-- Clear title and overview
-- Key decisions and outcomes
-- Action items with assignees
-- Relevant links and references
-- Proper markdown formatting
+The markdown content should be a comprehensive document that includes:
 
-${isUpdate ? 'If updating an existing document, merge the new information appropriately and provide a changes summary.' : 'Create a new, well-structured document.'}
+1. **Overview section**: Clear summary of the main discussion/issue
+2. **Key Points section**: All important discussion points
+3. **Decisions Made section**: Any decisions that were reached
+4. **Action Items section**: Tasks and assignments (with assignees if known)
+5. **Participants section**: People involved in the discussion
+6. **Technical Details section**: Any technical specifications, architecture decisions, or implementation details
+7. **Context section**: Background information and links to related resources
+8. **Tags section**: Relevant categorization tags
+
+Use proper markdown formatting with:
+- Clear headings (##, ###)
+- Bullet points and numbered lists
+- Code blocks for technical content
+- Tables if appropriate
+- Links and references
+
+Make this a standalone document that someone can read and understand the complete context, decisions, and outcomes without needing to refer to the original conversation.
+
+${isUpdate ? 'If updating an existing document, merge the new information appropriately and provide a changes summary.' : 'Create a new, comprehensive, well-structured document.'}
 `;
   }
 } 

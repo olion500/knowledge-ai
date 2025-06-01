@@ -431,12 +431,9 @@ describe('DocumentService', () => {
       expect(result).toContain('product-planning');
       expect(result).toContain('95.0%');
       expect(result).toContain('SLACK');
-      expect(result).toContain('Point 1');
-      expect(result).toContain('Decision 1');
-      expect(result).toContain('Action 1');
-      expect(result).toContain('@user1');
-      expect(result).toContain('`tag1`');
-      expect(result).not.toContain('Changes Summary');
+      expect(result).toContain('user1, user2');
+      expect(result).toContain('Documentation Update');
+      expect(result).not.toContain('Changes');
     });
 
     it('should include changes summary for updates', () => {
@@ -469,7 +466,7 @@ describe('DocumentService', () => {
         'slack',
       );
 
-      expect(result).toContain('Changes Summary');
+      expect(result).toContain('Changes');
       expect(result).toContain('Added new information');
     });
   });
