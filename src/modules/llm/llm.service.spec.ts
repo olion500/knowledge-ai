@@ -387,4 +387,147 @@ describe('LLMService', () => {
       expect(Logger.prototype.error).toHaveBeenCalledWith('Failed to summarize content', error);
     });
   });
+
+  describe('compareDocumentSimilarity', () => {
+    it('should identify similar documents', async () => {
+      const mockSimilarity = {
+        similarityScore: 0.85,
+        reasoning: 'Both documents discuss the same product feature with minor differences',
+        keyDifferences: ['Slight wording changes', 'Updated participant list'],
+      };
+
+      mockProvider.createCompletion.mockResolvedValue({
+        content: JSON.stringify(mockSimilarity),
+        usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+        finishReason: 'stop',
+      });
+
+      const request = {
+        existingContent: '# Product Feature\n\nThis document discusses the new login feature implementation...',
+        newSummary: {
+          summary: 'Discussion about login feature implementation',
+          keyPoints: ['Feature requirements', 'Implementation approach'],
+          decisions: ['Use OAuth2'],
+          actionItems: ['Create wireframes'],
+          participants: ['john', 'jane'],
+          tags: ['feature', 'login'],
+        },
+        classification: {
+          topic: 'product-planning',
+          confidence: 0.95,
+          reasoning: 'Discussion about product features',
+          suggestedTags: ['product', 'feature'],
+        },
+        similarityThreshold: 0.8,
+        context: {
+          source: 'slack' as const,
+          participants: ['john', 'jane'],
+        },
+      };
+
+      const result = await service.compareDocumentSimilarity(request);
+
+      expect(result).toEqual(mockSimilarity);
+      expect(mockProvider.createCompletion).toHaveBeenCalledWith({
+        messages: [{ role: 'user', content: expect.stringContaining('semantic similarity') }],
+        maxTokens: 1000,
+        responseFormat: { type: 'json_object' },
+      });
+    });
+
+    it('should identify different documents', async () => {
+      const mockSimilarity = {
+        similarityScore: 0.3,
+        reasoning: 'Documents discuss different aspects of the system',
+        keyDifferences: ['Different decisions made', 'New action items', 'Different participants'],
+      };
+
+      mockProvider.createCompletion.mockResolvedValue({
+        content: JSON.stringify(mockSimilarity),
+        usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+        finishReason: 'stop',
+      });
+
+      const request = {
+        existingContent: '# Security Policy\n\nThis document outlines security requirements...',
+        newSummary: {
+          summary: 'Discussion about new payment integration',
+          keyPoints: ['Payment gateway selection', 'Security considerations'],
+          decisions: ['Use Stripe API'],
+          actionItems: ['Setup payment processing'],
+          participants: ['alice', 'bob'],
+          tags: ['payment', 'integration'],
+        },
+        classification: {
+          topic: 'technical-architecture',
+          confidence: 0.9,
+          reasoning: 'Discussion about technical implementation',
+          suggestedTags: ['architecture', 'payment'],
+        },
+      };
+
+      const result = await service.compareDocumentSimilarity(request);
+
+      expect(result).toEqual(mockSimilarity);
+      expect(mockProvider.createCompletion).toHaveBeenCalledWith({
+        messages: [{ role: 'user', content: expect.stringContaining('semantic similarity') }],
+        maxTokens: 1000,
+        responseFormat: { type: 'json_object' },
+      });
+    });
+
+    it('should handle similarity comparison errors', async () => {
+      mockProvider.createCompletion.mockRejectedValue(new Error('API Error'));
+
+      const request = {
+        existingContent: 'Some content',
+        newSummary: {} as any,
+        classification: {} as any,
+      };
+
+      await expect(service.compareDocumentSimilarity(request)).rejects.toThrow('API Error');
+    });
+
+    it('should use default threshold when not specified', async () => {
+      const mockSimilarity = {
+        similarityScore: 0.5,
+        reasoning: 'Using default threshold of 0.7',
+        keyDifferences: ['Default threshold test'],
+      };
+
+      mockProvider.createCompletion.mockResolvedValue({
+        content: JSON.stringify(mockSimilarity),
+        usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+        finishReason: 'stop',
+      });
+
+      const request = {
+        existingContent: '# Test Document',
+        newSummary: {
+          summary: 'Test summary',
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          participants: [],
+          tags: [],
+        },
+        classification: {
+          topic: 'general-discussion',
+          confidence: 0.8,
+          reasoning: 'Test classification',
+          suggestedTags: [],
+        },
+        // No similarityThreshold specified
+      };
+
+      const result = await service.compareDocumentSimilarity(request);
+
+      expect(result).toEqual(mockSimilarity);
+      expect(mockProvider.createCompletion).toHaveBeenCalledWith({
+        messages: [{ role: 'user', content: expect.stringContaining('semantic similarity') }],
+        maxTokens: 1000,
+        responseFormat: { type: 'json_object' },
+      });
+    });
+  });
 }); 

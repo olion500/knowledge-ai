@@ -9,6 +9,7 @@ import {
   SummaryRequest,
   ClassificationRequest,
   DocumentGenerationRequest,
+  DocumentSimilarityRequest,
 } from '../../common/interfaces/llm.interface';
 
 @Injectable()
@@ -104,6 +105,42 @@ export class DocumentService {
       );
       if (fileContent && fileContent.content) {
         existingContent = Buffer.from(fileContent.content, 'base64').toString('utf-8');
+        
+        // Step 4.5: Check similarity with existing document
+        this.logger.log(`Found existing document for topic ${classification.topic}, checking similarity...`);
+        
+        const similarityThreshold = parseFloat(this.configService.get<string>('SIMILARITY_THRESHOLD', '0.7'));
+        this.logger.log(`Using similarity threshold: ${similarityThreshold}`);
+        
+        const similarityRequest: DocumentSimilarityRequest = {
+          existingContent,
+          newSummary: summary,
+          classification,
+          similarityThreshold,
+          context: {
+            source,
+            participants: summary.participants,
+          },
+        };
+
+        const similarity = await this.llmService.compareDocumentSimilarity(similarityRequest);
+        
+        // Server-side similarity determination
+        const isSimilar = similarity.similarityScore > similarityThreshold;
+        
+        this.logger.log(`Similarity check result: ${isSimilar ? 'Similar' : 'Different'} (score: ${similarity.similarityScore})`);
+        this.logger.log(`Reasoning: ${similarity.reasoning}`);
+
+        if (isSimilar) {
+          this.logger.log('Content is too similar to existing document, skipping PR creation');
+          this.logger.log(`Key differences found: ${similarity.keyDifferences.join(', ')}`);
+          return; // Exit early, don't create PR
+        } else {
+          this.logger.log('Content is sufficiently different, proceeding with document update');
+          if (similarity.keyDifferences.length > 0) {
+            this.logger.log(`Key differences: ${similarity.keyDifferences.join(', ')}`);
+          }
+        }
       }
     }
 

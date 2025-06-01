@@ -3,12 +3,16 @@ import { ConfigService } from '@nestjs/config';
 import { LLMProvider } from '../../common/interfaces/llm-provider.interface';
 import { LLMProviderFactory } from './providers/llm-provider.factory';
 import {
+  LLMRequest,
+  LLMResponse,
   SummaryRequest,
   SummaryResponse,
   ClassificationRequest,
   ClassificationResponse,
   DocumentGenerationRequest,
   DocumentGenerationResponse,
+  DocumentSimilarityRequest,
+  DocumentSimilarityResponse,
 } from '../../common/interfaces/llm.interface';
 
 @Injectable()
@@ -89,6 +93,30 @@ export class LLMService {
       return parsed;
     } catch (error) {
       this.logger.error('Failed to generate document', error);
+      throw error;
+    }
+  }
+
+  async compareDocumentSimilarity(request: DocumentSimilarityRequest): Promise<DocumentSimilarityResponse> {
+    try {
+      const prompt = this.buildSimilarityPrompt(request);
+      
+      const completion = await this.provider.createCompletion({
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens: 1000,
+        responseFormat: { type: 'json_object' },
+      });
+
+      if (!completion.content) {
+        throw new Error('No response from LLM provider');
+      }
+
+      const parsed = JSON.parse(completion.content) as DocumentSimilarityResponse;
+      
+      this.logger.log(`Compared document similarity: score ${parsed.similarityScore} using ${this.provider.getModel()}`);
+      return parsed;
+    } catch (error) {
+      this.logger.error('Failed to compare document similarity', error);
       throw error;
     }
   }
@@ -223,6 +251,55 @@ Use proper markdown formatting with:
 Make this a standalone document that someone can read and understand the complete context, decisions, and outcomes without needing to refer to the original conversation.
 
 ${isUpdate ? 'If updating an existing document, merge the new information appropriately and provide a changes summary.' : 'Create a new, comprehensive, well-structured document.'}
+`;
+  }
+
+  private buildSimilarityPrompt(request: DocumentSimilarityRequest): string {
+    const contextInfo = request.context ? `
+Context:
+- Source: ${request.context.source}
+- Participants: ${request.context.participants?.join(', ') || 'Unknown'}
+` : '';
+
+    const threshold = request.similarityThreshold || 0.7;
+
+    return `
+You are an AI assistant that compares the semantic similarity between existing documentation and new content.
+
+${contextInfo}
+
+Existing document content:
+${request.existingContent}
+
+New content summary:
+${JSON.stringify(request.newSummary, null, 2)}
+
+Classification of new content:
+${JSON.stringify(request.classification, null, 2)}
+
+Please analyze if the new content adds significant value or represents meaningful changes compared to the existing document.
+
+Consider these factors:
+1. **Topic overlap**: Are they discussing the same general subject?
+2. **Decision differences**: Are there new decisions or changes to existing ones?
+3. **Information novelty**: Does the new content contain substantially new information?
+4. **Participant involvement**: Are there new key participants or perspectives?
+5. **Action item changes**: Are there new action items or changes to existing ones?
+6. **Context evolution**: Has the context or situation changed significantly?
+
+Provide a JSON response with this structure:
+{
+  "similarityScore": 0.85,
+  "reasoning": "Detailed explanation of the similarity assessment",
+  "keyDifferences": ["difference1", "difference2", ...]
+}
+
+Guidelines:
+- similarityScore: 0.0 = completely different, 1.0 = identical
+- Focus on identifying semantic similarity and meaningful differences
+- Consider something more similar if it's mostly the same discussion with minor updates
+- Consider something less similar if there are new decisions, significant new information, or changed context
+- Be conservative - when in doubt, assign a lower similarity score to avoid losing important updates
 `;
   }
 } 

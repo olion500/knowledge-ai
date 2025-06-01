@@ -75,4 +75,21 @@ export interface DocumentGenerationResponse {
   };
   isUpdate: boolean;
   changesSummary?: string;
+}
+
+export interface DocumentSimilarityRequest {
+  existingContent: string;
+  newSummary: SummaryResponse;
+  classification: ClassificationResponse;
+  similarityThreshold?: number; // Default 0.7
+  context?: {
+    source: 'slack' | 'jira';
+    participants?: string[];
+  };
+}
+
+export interface DocumentSimilarityResponse {
+  similarityScore: number; // 0-1, where 1 is identical
+  reasoning: string;
+  keyDifferences: string[];
 } 

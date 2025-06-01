@@ -44,6 +44,7 @@ describe('DocumentService', () => {
             summarizeContent: jest.fn(),
             classifyContent: jest.fn(),
             generateDocument: jest.fn(),
+            compareDocumentSimilarity: jest.fn(),
           },
         },
         {
@@ -214,6 +215,105 @@ describe('DocumentService', () => {
       expect(conversations).toHaveLength(2);
       expect(conversations[0]).toHaveLength(2); // Main message + reply
       expect(conversations[1]).toHaveLength(1); // Another main message
+    });
+
+    it('should skip PR creation when content is too similar to existing document', async () => {
+      const mockMessages: SlackMessage[] = [
+        {
+          id: '1234567890.123456',
+          channel: 'C1234567890',
+          user: 'U1234567890',
+          text: 'We need to decide on the new feature implementation',
+          timestamp: '1234567890.123456',
+          reactions: [
+            {
+              name: 'memo',
+              count: 1,
+              users: ['U1234567890'],
+            },
+          ],
+        },
+      ];
+
+      const mockSummary = {
+        summary: 'Discussion about new feature implementation',
+        keyPoints: ['Feature implementation decision needed'],
+        decisions: ['Go with option A'],
+        actionItems: ['Implement option A'],
+        participants: ['John Doe'],
+        tags: ['feature', 'decision'],
+      };
+
+      const mockClassification = {
+        topic: 'product-planning',
+        confidence: 0.95,
+        reasoning: 'Discussion about product features',
+        suggestedTags: ['product', 'planning'],
+      };
+
+      const mockSimilarity = {
+        similarityScore: 0.85,
+        reasoning: 'Both documents discuss the same feature with minor differences',
+        keyDifferences: ['Slight wording changes'],
+      };
+
+      const existingDocument = {
+        name: 'existing-feature-doc.md',
+        path: 'docs/product-planning/existing-feature-doc.md',
+        sha: 'existing-sha',
+        size: 1000,
+        url: 'existing-url',
+        html_url: 'existing-html-url',
+        git_url: 'existing-git-url',
+        download_url: 'existing-download-url',
+        type: 'file' as const,
+        content: '',
+        encoding: 'base64' as const,
+      };
+
+      // Mock user info responses
+      slackService.getUserInfo.mockImplementation((userId: string) => {
+        const userMap = {
+          'U1234567890': { id: 'U1234567890', name: 'john.doe', realName: 'John Doe', isBot: false },
+        };
+        return Promise.resolve(userMap[userId] || null);
+      });
+
+      llmService.summarizeContent.mockResolvedValue(mockSummary);
+      llmService.classifyContent.mockResolvedValue(mockClassification);
+      llmService.compareDocumentSimilarity.mockResolvedValue(mockSimilarity);
+      githubService.findExistingDocument.mockResolvedValue(existingDocument);
+      githubService.getFileContent.mockResolvedValue({
+        name: 'existing-feature-doc.md',
+        path: 'docs/product-planning/existing-feature-doc.md',
+        sha: 'existing-sha',
+        size: 1000,
+        url: 'existing-url',
+        html_url: 'existing-html-url',
+        git_url: 'existing-git-url',
+        download_url: 'existing-download-url',
+        type: 'file' as const,
+        content: Buffer.from('# Existing Feature Document\n\nThis document already covers the topic...').toString('base64'),
+        encoding: 'base64' as const,
+      });
+
+      await service.processSlackMessages(mockMessages);
+
+      expect(llmService.compareDocumentSimilarity).toHaveBeenCalledWith({
+        existingContent: expect.stringContaining('Existing Feature Document'),
+        newSummary: mockSummary,
+        classification: mockClassification,
+        similarityThreshold: 0.7,
+        context: {
+          source: 'slack',
+          participants: ['John Doe'],
+        },
+      });
+
+      // Should not create PR or update files when content is similar
+      expect(githubService.createBranch).not.toHaveBeenCalled();
+      expect(githubService.createOrUpdateFile).not.toHaveBeenCalled();
+      expect(githubService.createPullRequest).not.toHaveBeenCalled();
     });
   });
 
