@@ -77,9 +77,9 @@ Knowledge Sync AI automatically:
    cd knowledge-ai
    ```
 
-2. **Install dependencies**
+2. **Install dependencies** (includes localtunnel for development)
    ```bash
-   npm install
+   make install
    ```
 
 3. **Set up environment variables**
@@ -95,14 +95,74 @@ Knowledge Sync AI automatically:
    pnpm run start:prod
    ```
 
+## 🚀 Quick Start
+
+For **local development** with Slack webhook testing:
+
+```bash
+# Start development server with automatic tunnel setup
+make dev
+```
+
+This command will:
+- 🚇 Start localtunnel to expose your local server
+- 📋 Display the webhook URL for Slack configuration
+- 🔥 Start the NestJS server with live reload
+- 📊 Show real-time server logs
+
+**Example output:**
+```
+🚀 Starting development environment...
+Starting localtunnel...
+✅ Tunnel ready!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 SLACK CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌐 Tunnel URL: https://abc123.loca.lt
+📝 Event Subscription URL: https://abc123.loca.lt/slack/events
+🔗 Slack API: https://api.slack.com/apps
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Starting NestJS server... (Ctrl+C to stop all services)
+
+[Server logs appear here...]
+```
+
+### 🛠️ Development Commands
+
+```bash
+# Install dependencies and tools
+make install
+
+# Start development environment (tunnel + server)
+make dev
+
+# Check tunnel URL anytime
+make tunnel-url
+
+# Stop all services
+make stop
+
+# Force kill all processes
+make clean
+
+# Nuclear option: kill ALL related processes
+make kill-all
+
+# Check service status
+make status
+
+# Show all available commands
+make help
+```
+
 ## 🔧 Configuration
 
 ### Slack App Setup
 
 1. Create a new Slack app at https://api.slack.com/apps
 2. Enable Event Subscriptions:
-   - Request URL: `https://your-domain.com/slack/events`
-   - Subscribe to: `message.channels`, `reaction_added`
+   - **Request URL**: Use the URL from `make dev` output (e.g., `https://abc123.loca.lt/slack/events`)
+   - **Subscribe to Bot Events**: `message.channels`, `reaction_added`
 3. Add Bot Token Scopes:
    - `channels:history`
    - `channels:read`
@@ -110,11 +170,15 @@ Knowledge Sync AI automatically:
    - `users:read`
 4. Install the app to your workspace
 
+> 💡 **Development Tip**: When running `make dev`, the tunnel URL changes each time. Use `make tunnel-url` to quickly get the current URL for Slack configuration.
+
 ### Jira Webhook Setup
 
 1. Go to Jira Settings → System → Webhooks
-2. Create webhook with URL: `https://your-domain.com/jira/webhook`
+2. Create webhook with URL: Use your tunnel URL + `/jira/webhook` (e.g., `https://abc123.loca.lt/jira/webhook`)
 3. Select events: Issue created, updated, commented
+
+> 💡 **Development Tip**: For local testing, use the tunnel URL from `make dev` or `make tunnel-url`
 
 ### GitHub Repository Setup
 
@@ -243,23 +307,25 @@ Knowledge Sync AI includes comprehensive unit and integration tests to ensure re
 
 ```bash
 # Unit tests
-npm run test
+pnpm test
 
 # Watch mode for development
-npm run test:watch
+pnpm test:watch
 
 # Test coverage
-npm run test:cov
+pnpm test:cov
 
 # Debug tests
-npm run test:debug
+pnpm test:debug
 
 # E2E tests (requires test database)
-npm run test:e2e
+pnpm test:e2e
 
 # Complete E2E test cycle (start DB → run tests → cleanup)
-npm run test:e2e:full
+pnpm test:e2e:full
 ```
+
+> 🚀 **Quick Development Workflow**: Use `make dev` for live development and testing with webhooks!
 
 ### E2E Testing Setup
 
@@ -269,16 +335,16 @@ The e2e tests require a separate test database to avoid conflicts with your deve
 
 ```bash
 # Start test database containers
-npm run test:db:up
+pnpm test:db:up
 
 # Run e2e tests (database must be running)
-npm run test:e2e
+pnpm test:e2e
 
 # Stop and cleanup test database
-npm run test:db:down
+pnpm test:db:down
 
 # Automated: Start DB → Run tests → Cleanup (recommended)
-npm run test:e2e:full
+pnpm test:e2e:full
 ```
 
 #### Test Database Configuration
