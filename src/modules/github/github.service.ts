@@ -285,4 +285,160 @@ export class GitHubService {
       return null;
     }
   }
+
+  // Repository 관련 메서드들 추가
+  async getRepositoryInfo(owner: string, name: string): Promise<any> {
+    try {
+      const { data } = await this.octokit.repos.get({
+        owner,
+        repo: name,
+      });
+
+      return {
+        owner: data.owner.login,
+        name: data.name,
+        fullName: data.full_name,
+        defaultBranch: data.default_branch,
+        description: data.description,
+        language: data.language,
+        isPrivate: data.private,
+        metadata: {
+          stars: data.stargazers_count,
+          forks: data.forks_count,
+          size: data.size,
+          topics: data.topics || [],
+          openIssues: data.open_issues_count,
+          watchers: data.watchers_count,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+          pushedAt: data.pushed_at,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get repository info for ${owner}/${name}`, error);
+      throw error;
+    }
+  }
+
+  async getLatestCommit(owner: string, name: string, branch: string): Promise<any> {
+    try {
+      const { data } = await this.octokit.repos.getCommit({
+        owner,
+        repo: name,
+        ref: branch,
+      });
+
+      return {
+        sha: data.sha,
+        message: data.commit.message,
+        author: {
+          name: data.commit.author?.name || 'Unknown',
+          email: data.commit.author?.email || 'unknown@example.com',
+          date: data.commit.author?.date || new Date().toISOString(),
+        },
+        url: data.html_url,
+        stats: data.stats ? {
+          additions: data.stats.additions,
+          deletions: data.stats.deletions,
+          total: data.stats.total,
+        } : undefined,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get latest commit for ${owner}/${name}:${branch}`, error);
+      throw error;
+    }
+  }
+
+  async getCommitsBetween(owner: string, name: string, since: string, until?: string): Promise<any[]> {
+    try {
+      const params: any = {
+        owner,
+        repo: name,
+        since,
+      };
+
+      if (until) {
+        params.until = until;
+      }
+
+      const { data } = await this.octokit.repos.listCommits(params);
+      
+      return data.map(commit => ({
+        sha: commit.sha,
+        message: commit.commit.message,
+        author: {
+          name: commit.commit.author?.name || 'Unknown',
+          email: commit.commit.author?.email || 'unknown@example.com',
+          date: commit.commit.author?.date || new Date().toISOString(),
+        },
+        url: commit.html_url,
+      }));
+    } catch (error) {
+      this.logger.error(`Failed to get commits between ${since} and ${until} for ${owner}/${name}`, error);
+      throw error;
+    }
+  }
+
+  async getRepositoryLanguages(owner: string, name: string): Promise<Record<string, number>> {
+    try {
+      const { data } = await this.octokit.repos.listLanguages({
+        owner,
+        repo: name,
+      });
+
+      return data;
+    } catch (error) {
+      this.logger.error(`Failed to get repository languages for ${owner}/${name}`, error);
+      throw error;
+    }
+  }
+
+  async getRepositoryContents(owner: string, name: string, path = '', branch?: string): Promise<GitHubContent[]> {
+    try {
+      const params: any = {
+        owner,
+        repo: name,
+        path,
+      };
+
+      if (branch) {
+        params.ref = branch;
+      }
+
+      const { data } = await this.octokit.repos.getContent(params);
+
+      if (!Array.isArray(data)) {
+        return [data as GitHubContent];
+      }
+
+      return data as GitHubContent[];
+    } catch (error) {
+      if (error.status === 404) {
+        return [];
+      }
+      this.logger.error(`Failed to get repository contents for ${owner}/${name}:${path}`, error);
+      throw error;
+    }
+  }
+
+  async getCommits(owner: string, repo: string, options?: {
+    since?: string;
+    until?: string;
+    sha?: string;
+    per_page?: number;
+    page?: number;
+  }): Promise<any[]> {
+    try {
+      const { data } = await this.octokit.repos.listCommits({
+        owner,
+        repo,
+        ...options,
+      });
+
+      return data;
+    } catch (error) {
+      this.logger.error(`Failed to get commits for ${owner}/${repo}`, error);
+      throw error;
+    }
+  }
 } 

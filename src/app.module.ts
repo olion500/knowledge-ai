@@ -16,6 +16,9 @@ import { JiraModule } from './modules/jira/jira.module';
 import { LLMModule } from './modules/llm/llm.module';
 import { GitHubModule } from './modules/github/github.module';
 import { DocumentModule } from './modules/document/document.module';
+import { RepositoryModule } from './modules/repository/repository.module';
+import { CodeAnalysisModule } from './modules/code-analysis/code-analysis.module';
+import { SyncModule } from './modules/sync/sync.module';
 
 @Module({
   imports: [
@@ -50,6 +53,9 @@ import { DocumentModule } from './modules/document/document.module';
     LLMModule,
     GitHubModule,
     DocumentModule,
+    RepositoryModule,
+    CodeAnalysisModule,
+    SyncModule,
   ],
   controllers: [AppController],
   providers: [AppService],
