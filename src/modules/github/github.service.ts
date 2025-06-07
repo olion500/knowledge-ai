@@ -233,9 +233,8 @@ export class GitHubService {
     const basePath = this.configService.get<string>('DOCS_BASE_PATH') || 'docs';
     const sanitizedTopic = topic.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     
-    return `${basePath}/${sanitizedTopic}/${timestamp}-${sanitizedTitle}.md`;
+    return `${basePath}/${sanitizedTopic}/${sanitizedTitle}.md`;
   }
 
   async listDirectoryContents(dirPath: string, branch = 'main'): Promise<GitHubContent[]> {
@@ -269,15 +268,13 @@ export class GitHubService {
     try {
       const contents = await this.listDirectoryContents(topicPath);
       
-      // Find the most recent document in the topic directory
-      // Only consider files with date format (YYYY-MM-DD-)
+      // Find markdown documents in the topic directory
       const markdownFiles = contents
         .filter(file => 
           file.type === 'file' && 
-          file.name.endsWith('.md') && 
-          /^\d{4}-\d{2}-\d{2}-/.test(file.name)
+          file.name.endsWith('.md')
         )
-        .sort((a, b) => b.name.localeCompare(a.name)); // Sort by name descending (most recent first)
+        .sort((a, b) => b.name.localeCompare(a.name)); // Sort by name descending (alphabetical)
 
       return markdownFiles.length > 0 ? markdownFiles[0] : null;
     } catch (error) {

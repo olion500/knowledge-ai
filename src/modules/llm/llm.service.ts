@@ -201,7 +201,7 @@ ${request.existingDocument}
 ` : '';
 
     return `
-You are an AI assistant that generates comprehensive markdown documentation from summarized content.
+You are an AI assistant that generates comprehensive PRD (Product Requirements Document) style markdown documentation from summarized content.
 
 ${existingDocSection}
 
@@ -217,8 +217,8 @@ Original content metadata:
 
 Please provide a JSON response with the following structure:
 {
-  "title": "Document title",
-  "content": "Full markdown content of the document",
+  "title": "Feature or topic name without date",
+  "content": "Full markdown content of the document in PRD format",
   "metadata": {
     "topic": "topic name",
     "tags": ["tag1", "tag2"],
@@ -230,27 +230,106 @@ Please provide a JSON response with the following structure:
   ${isUpdate ? '"changesSummary": "Summary of what changed",' : ''}
 }
 
-The markdown content should be a comprehensive document that includes:
+The markdown content MUST follow this PRD format structure:
 
-1. **Overview section**: Clear summary of the main discussion/issue
-2. **Key Points section**: All important discussion points
-3. **Decisions Made section**: Any decisions that were reached
-4. **Action Items section**: Tasks and assignments (with assignees if known)
-5. **Participants section**: People involved in the discussion
-6. **Technical Details section**: Any technical specifications, architecture decisions, or implementation details
-7. **Context section**: Background information and links to related resources
-8. **Tags section**: Relevant categorization tags
+# 📄 [Feature/Topic Name]
 
-Use proper markdown formatting with:
-- Clear headings (##, ###)
-- Bullet points and numbered lists
-- Code blocks for technical content
-- Tables if appropriate
-- Links and references
+---
 
-Make this a standalone document that someone can read and understand the complete context, decisions, and outcomes without needing to refer to the original conversation.
+## 1. TL;DR
 
-${isUpdate ? 'If updating an existing document, merge the new information appropriately and provide a changes summary.' : 'Create a new, comprehensive, well-structured document.'}
+간략한 요약 (3~5줄):
+- [Main discussion point or feature description]
+- [Key approach or methodology]
+- [Success criteria or expected outcome]
+
+---
+
+## 2. Problem Statement
+
+- [Problem 1: Description of the issue or challenge]
+- [Problem 2: Current pain points or limitations]
+- [Problem 3: User/business impact]
+
+---
+
+## 3. Hypothesis (가설)
+
+- [Main hypothesis based on the discussion or proposed solution]
+
+---
+
+## 4. Proposed Solution
+
+- [Solution approach 1]
+- [Technical implementation details]
+- [UI/UX considerations if applicable]
+- [Integration requirements]
+
+---
+
+## 5. Metrics (성과 측정 지표)
+
+| 지표 항목              | 목표 수치         |
+|------------------------|-------------------|
+| [Metric 1]             | [Target value]    |
+| [Metric 2]             | [Target value]    |
+| [Metric 3]             | [Target value]    |
+
+---
+
+## 6. Timeline
+
+| 단계                | 일정             |
+|---------------------|------------------|
+| [Phase 1]           | [Date/Duration]  |
+| [Phase 2]           | [Date/Duration]  |
+| [Launch]            | [Date/Duration]  |
+
+---
+
+## 7. Owners & Stakeholders
+
+| 역할               | 담당자 이름         |
+|--------------------|---------------------|
+| Product Owner      | [Name from participants] |
+| Tech Lead          | [Name from participants] |
+| Designer           | [Name from participants] |
+| Stakeholder        | [Name from participants] |
+
+---
+
+## 8. Risks / Open Questions
+
+- [Risk 1: Description and mitigation strategy]
+- [Risk 2: Technical challenges]
+- [Open Question 1: Items requiring further discussion]
+- [Open Question 2: Dependencies or blockers]
+
+---
+
+## 9. Appendix (선택 사항)
+
+- [Additional context from the discussion]
+- [Technical specifications or code snippets if mentioned]
+- [Related links or references if any]
+- [Decision rationale and alternatives considered]
+
+---
+
+*Generated from ${request.originalContent.source.toUpperCase()} discussion*
+*Last updated: ${new Date().toISOString().split('T')[0]}*
+
+IMPORTANT GUIDELINES:
+- Create a clear, professional PRD document
+- Extract relevant information from the summary and classification
+- Use Korean labels as shown in the template (TL;DR, 가설, etc.)
+- Fill in actual content from the discussion, not placeholder text
+- If information is missing for a section, note "정보 부족" or "추후 논의 필요"
+- Focus on actionable insights and clear decision points
+- Maintain professional tone suitable for product documentation
+
+${isUpdate ? 'If updating an existing document, merge the new information appropriately into the PRD structure and provide a changes summary.' : 'Create a new, comprehensive PRD document.'}
 `;
   }
 

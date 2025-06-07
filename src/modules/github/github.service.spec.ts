@@ -334,45 +334,33 @@ describe('GitHubService', () => {
   });
 
   describe('generateDocumentPath', () => {
-    it('should generate proper document path', async () => {
-      // Mock Date to ensure consistent timestamp
-      const mockDate = new Date('2024-01-15T10:30:00.000Z');
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as any);
-
+    it('should generate proper document path without date', async () => {
       const result = await service.generateDocumentPath('Product Planning', 'Feature Discussion');
 
-      expect(result).toBe('docs/product-planning/2024-01-15-feature-discussion.md');
-
-      // Restore Date
-      jest.restoreAllMocks();
+      expect(result).toBe('docs/product-planning/feature-discussion.md');
     });
 
     it('should sanitize topic and title', async () => {
-      const mockDate = new Date('2024-01-15T10:30:00.000Z');
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as any);
-
       const result = await service.generateDocumentPath(
         'Product Planning & Design!',
         'Feature Discussion (Important)',
       );
 
-      expect(result).toBe('docs/product-planning---design-/2024-01-15-feature-discussion--important-.md');
-
-      jest.restoreAllMocks();
+      expect(result).toBe('docs/product-planning---design-/feature-discussion--important-.md');
     });
   });
 
   describe('findExistingDocument', () => {
-    it('should find most recent document in topic directory', async () => {
+    it('should find markdown document in topic directory', async () => {
       const mockFiles = [
         {
-          name: '2024-01-10-old-doc.md',
-          path: 'docs/product-planning/2024-01-10-old-doc.md',
+          name: 'feature-planning.md',
+          path: 'docs/product-planning/feature-planning.md',
           type: 'file' as const,
         },
         {
-          name: '2024-01-15-recent-doc.md',
-          path: 'docs/product-planning/2024-01-15-recent-doc.md',
+          name: 'product-roadmap.md',
+          path: 'docs/product-planning/product-roadmap.md',
           type: 'file' as const,
         },
         {
@@ -390,9 +378,10 @@ describe('GitHubService', () => {
 
       const result = await service.findExistingDocument('product-planning');
 
+      // Should return the first file alphabetically (descending order)
       expect(result).toEqual({
-        name: '2024-01-15-recent-doc.md',
-        path: 'docs/product-planning/2024-01-15-recent-doc.md',
+        name: 'README.md',
+        path: 'docs/product-planning/README.md',
         type: 'file',
       });
     });

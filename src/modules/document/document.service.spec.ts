@@ -141,7 +141,7 @@ describe('DocumentService', () => {
       llmService.classifyContent.mockResolvedValue(mockClassification);
       llmService.generateDocument.mockResolvedValue(mockDocument);
       githubService.findExistingDocument.mockResolvedValue(null);
-      githubService.generateDocumentPath.mockResolvedValue('docs/product-planning/2024-01-01-feature-implementation-decision.md');
+      githubService.generateDocumentPath.mockResolvedValue('docs/product-planning/feature-implementation-decision.md');
       githubService.createBranch.mockResolvedValue();
       githubService.createOrUpdateFile.mockResolvedValue('commit-sha-123');
       githubService.createPullRequest.mockResolvedValue({
@@ -400,7 +400,7 @@ describe('DocumentService', () => {
       llmService.classifyContent.mockResolvedValue(mockClassification);
       llmService.generateDocument.mockResolvedValue(mockDocument);
       githubService.findExistingDocument.mockResolvedValue(null);
-      githubService.generateDocumentPath.mockResolvedValue('docs/bug-reports/2024-01-01-authentication-bug-report.md');
+      githubService.generateDocumentPath.mockResolvedValue('docs/bug-reports/authentication-bug-report.md');
       githubService.createBranch.mockResolvedValue();
       githubService.createOrUpdateFile.mockResolvedValue('commit-sha-123');
       githubService.createPullRequest.mockResolvedValue({

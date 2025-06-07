@@ -272,8 +272,8 @@ describe('LLMService', () => {
     it('should generate document successfully', async () => {
       const mockResponse = {
         content: JSON.stringify({
-          title: 'Development Discussion Summary',
-          content: '# Development Discussion Summary\n\nTest content',
+          title: 'Development Discussion',
+          content: '# 📄 Development Discussion\n\n---\n\n## 1. TL;DR\n\n간략한 요약 (3~5줄):\n- Test content for development discussion\n\nTest PRD content',
           metadata: {
             topic: 'development',
             tags: ['dev', 'code'],
@@ -294,11 +294,11 @@ describe('LLMService', () => {
         responseFormat: { type: 'json_object' },
       });
 
-      expect(result.title).toBe('Development Discussion Summary');
+      expect(result.title).toBe('Development Discussion');
       expect(result.isUpdate).toBe(false);
 
       expect(Logger.prototype.log).toHaveBeenCalledWith(
-        'Generated document: Development Discussion Summary using test-model'
+        'Generated document: Development Discussion using test-model'
       );
     });
 
