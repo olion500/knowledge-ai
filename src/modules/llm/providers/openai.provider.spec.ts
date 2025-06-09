@@ -27,16 +27,19 @@ describe('OpenAIProvider', () => {
     mockCreateCompletion = jest.fn();
     mockListModels = jest.fn();
 
-    MockedOpenAI.mockImplementation(() => ({
-      chat: {
-        completions: {
-          create: mockCreateCompletion,
-        },
-      },
-      models: {
-        list: mockListModels,
-      },
-    } as any));
+    MockedOpenAI.mockImplementation(
+      () =>
+        ({
+          chat: {
+            completions: {
+              create: mockCreateCompletion,
+            },
+          },
+          models: {
+            list: mockListModels,
+          },
+        }) as any,
+    );
 
     provider = new OpenAIProvider(config);
 
@@ -61,9 +64,9 @@ describe('OpenAIProvider', () => {
     it('should handle missing baseUrl', () => {
       const configWithoutBaseUrl = { ...config };
       delete configWithoutBaseUrl.baseUrl;
-      
+
       new OpenAIProvider(configWithoutBaseUrl);
-      
+
       expect(MockedOpenAI).toHaveBeenCalledWith({
         apiKey: 'test-api-key',
         baseURL: undefined,
@@ -81,10 +84,12 @@ describe('OpenAIProvider', () => {
 
     it('should create completion successfully', async () => {
       const mockResponse = {
-        choices: [{
-          message: { content: '{"result": "success"}' },
-          finish_reason: 'stop',
-        }],
+        choices: [
+          {
+            message: { content: '{"result": "success"}' },
+            finish_reason: 'stop',
+          },
+        ],
         usage: {
           prompt_tokens: 10,
           completion_tokens: 15,
@@ -117,7 +122,9 @@ describe('OpenAIProvider', () => {
 
     it('should use config defaults when request values not provided', async () => {
       const mockResponse = {
-        choices: [{ message: { content: 'Test response' }, finish_reason: 'stop' }],
+        choices: [
+          { message: { content: 'Test response' }, finish_reason: 'stop' },
+        ],
         usage: { prompt_tokens: 5, completion_tokens: 10, total_tokens: 15 },
       };
 
@@ -140,7 +147,9 @@ describe('OpenAIProvider', () => {
 
     it('should handle missing usage data', async () => {
       const mockResponse = {
-        choices: [{ message: { content: 'Test response' }, finish_reason: 'stop' }],
+        choices: [
+          { message: { content: 'Test response' }, finish_reason: 'stop' },
+        ],
         usage: null,
       };
 
@@ -159,7 +168,7 @@ describe('OpenAIProvider', () => {
       mockCreateCompletion.mockResolvedValue(mockResponse);
 
       await expect(provider.createCompletion(mockRequest)).rejects.toThrow(
-        'No response content from OpenAI'
+        'No response content from OpenAI',
       );
     });
 
@@ -167,8 +176,13 @@ describe('OpenAIProvider', () => {
       const error = new Error('OpenAI API Error');
       mockCreateCompletion.mockRejectedValue(error);
 
-      await expect(provider.createCompletion(mockRequest)).rejects.toThrow('OpenAI API Error');
-      expect(Logger.prototype.error).toHaveBeenCalledWith('OpenAI completion failed', error);
+      await expect(provider.createCompletion(mockRequest)).rejects.toThrow(
+        'OpenAI API Error',
+      );
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'OpenAI completion failed',
+        error,
+      );
     });
 
     it('should handle temperature 0 correctly', async () => {
@@ -189,7 +203,7 @@ describe('OpenAIProvider', () => {
       expect(mockCreateCompletion).toHaveBeenCalledWith(
         expect.objectContaining({
           temperature: 0,
-        })
+        }),
       );
     });
   });
@@ -220,10 +234,7 @@ describe('OpenAIProvider', () => {
 
     it('should return false when model is not available', async () => {
       const mockModels = {
-        data: [
-          { id: 'gpt-3.5-turbo' },
-          { id: 'gpt-4' },
-        ],
+        data: [{ id: 'gpt-3.5-turbo' }, { id: 'gpt-4' }],
       };
 
       mockListModels.mockResolvedValue(mockModels);
@@ -240,7 +251,10 @@ describe('OpenAIProvider', () => {
       const result = await provider.isAvailable();
 
       expect(result).toBe(false);
-      expect(Logger.prototype.warn).toHaveBeenCalledWith('OpenAI availability check failed', error);
+      expect(Logger.prototype.warn).toHaveBeenCalledWith(
+        'OpenAI availability check failed',
+        error,
+      );
     });
   });
-}); 
+});

@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository as TypeOrmRepository } from 'typeorm';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { RepositoryService } from './repository.service';
 import { Repository } from '../../common/entities/repository.entity';
 import { GitHubService } from '../github/github.service';
@@ -22,7 +26,8 @@ describe('RepositoryService', () => {
     name: 'react',
     fullName: 'facebook/react',
     defaultBranch: 'main',
-    description: 'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
+    description:
+      'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
     language: 'JavaScript',
     lastCommitSha: 'abc123',
     lastSyncedAt: new Date('2024-01-01T00:00:00Z'),
@@ -53,7 +58,8 @@ describe('RepositoryService', () => {
     name: 'react',
     fullName: 'facebook/react',
     defaultBranch: 'main',
-    description: 'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
+    description:
+      'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
     language: 'JavaScript',
     isPrivate: false,
     metadata: {
@@ -130,7 +136,10 @@ describe('RepositoryService', () => {
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { owner: 'facebook', name: 'react' },
       });
-      expect(githubService.getRepositoryInfo).toHaveBeenCalledWith('facebook', 'react');
+      expect(githubService.getRepositoryInfo).toHaveBeenCalledWith(
+        'facebook',
+        'react',
+      );
       expect(repository.create).toHaveBeenCalled();
       expect(repository.save).toHaveBeenCalled();
       expect(result.id).toBe(mockRepository.id);
@@ -140,15 +149,21 @@ describe('RepositoryService', () => {
     it('should throw ConflictException when repository already exists', async () => {
       repository.findOne.mockResolvedValue(mockRepository);
 
-      await expect(service.create(createDto)).rejects.toThrow(ConflictException);
+      await expect(service.create(createDto)).rejects.toThrow(
+        ConflictException,
+      );
       expect(githubService.getRepositoryInfo).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when GitHub repository is not accessible', async () => {
       repository.findOne.mockResolvedValue(null);
-      githubService.getRepositoryInfo.mockRejectedValue(new Error('Repository not found'));
+      githubService.getRepositoryInfo.mockRejectedValue(
+        new Error('Repository not found'),
+      );
 
-      await expect(service.create(createDto)).rejects.toThrow(BadRequestException);
+      await expect(service.create(createDto)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(repository.create).not.toHaveBeenCalled();
     });
   });
@@ -194,7 +209,9 @@ describe('RepositoryService', () => {
     it('should throw NotFoundException when repository not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -228,7 +245,7 @@ describe('RepositoryService', () => {
     it('should update repository successfully', async () => {
       const updatedRepo = { ...mockRepository, ...updateDto };
       repository.findOne.mockResolvedValue(mockRepository);
-      repository.save.mockResolvedValue(updatedRepo as any);
+      repository.save.mockResolvedValue(updatedRepo);
 
       const result = await service.update(mockRepository.id, updateDto);
 
@@ -243,14 +260,20 @@ describe('RepositoryService', () => {
     it('should throw NotFoundException when repository not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.update('non-existent-id', updateDto)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update('non-existent-id', updateDto),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('remove', () => {
     it('should soft delete repository successfully', async () => {
       repository.findOne.mockResolvedValue(mockRepository);
-      repository.softDelete.mockResolvedValue({ affected: 1, raw: {}, generatedMaps: [] });
+      repository.softDelete.mockResolvedValue({
+        affected: 1,
+        raw: {},
+        generatedMaps: [],
+      });
 
       await service.remove(mockRepository.id);
 
@@ -263,7 +286,9 @@ describe('RepositoryService', () => {
     it('should throw NotFoundException when repository not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -277,23 +302,32 @@ describe('RepositoryService', () => {
       repository.findOne.mockResolvedValue(mockRepository);
       githubService.getRepositoryInfo.mockResolvedValue(mockGitHubRepoInfo);
       githubService.getLatestCommit.mockResolvedValue(mockCommitInfo);
-      repository.save.mockResolvedValue(syncedRepo as any);
+      repository.save.mockResolvedValue(syncedRepo);
 
       const result = await service.syncRepository(mockRepository.id, syncDto);
 
-      expect(githubService.getRepositoryInfo).toHaveBeenCalledWith('facebook', 'react');
-      expect(githubService.getLatestCommit).toHaveBeenCalledWith('facebook', 'react', 'main');
+      expect(githubService.getRepositoryInfo).toHaveBeenCalledWith(
+        'facebook',
+        'react',
+      );
+      expect(githubService.getLatestCommit).toHaveBeenCalledWith(
+        'facebook',
+        'react',
+        'main',
+      );
       expect(repository.save).toHaveBeenCalled();
       expect(result.lastCommitSha).toBe('xyz789');
     });
 
     it('should skip sync when already up to date and not forced', async () => {
       const upToDateRepo = { ...mockRepository, lastCommitSha: 'xyz789' };
-      repository.findOne.mockResolvedValue(upToDateRepo as any);
+      repository.findOne.mockResolvedValue(upToDateRepo);
       githubService.getRepositoryInfo.mockResolvedValue(mockGitHubRepoInfo);
       githubService.getLatestCommit.mockResolvedValue(mockCommitInfo);
 
-      const result = await service.syncRepository(mockRepository.id, { force: false });
+      const result = await service.syncRepository(mockRepository.id, {
+        force: false,
+      });
 
       expect(repository.save).not.toHaveBeenCalled();
       expect(result.lastCommitSha).toBe('xyz789');
@@ -301,12 +335,14 @@ describe('RepositoryService', () => {
 
     it('should force sync when requested', async () => {
       const upToDateRepo = { ...mockRepository, lastCommitSha: 'xyz789' };
-      repository.findOne.mockResolvedValue(upToDateRepo as any);
+      repository.findOne.mockResolvedValue(upToDateRepo);
       githubService.getRepositoryInfo.mockResolvedValue(mockGitHubRepoInfo);
       githubService.getLatestCommit.mockResolvedValue(mockCommitInfo);
-      repository.save.mockResolvedValue(upToDateRepo as any);
+      repository.save.mockResolvedValue(upToDateRepo);
 
-      const result = await service.syncRepository(mockRepository.id, { force: true });
+      const result = await service.syncRepository(mockRepository.id, {
+        force: true,
+      });
 
       expect(repository.save).toHaveBeenCalled();
     });
@@ -315,7 +351,9 @@ describe('RepositoryService', () => {
       repository.findOne.mockResolvedValue(mockRepository);
       githubService.getRepositoryInfo.mockRejectedValue(new Error('API error'));
 
-      await expect(service.syncRepository(mockRepository.id, syncDto)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.syncRepository(mockRepository.id, syncDto),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -335,27 +373,31 @@ describe('RepositoryService', () => {
 
   describe('getRepositoryFiles', () => {
     const mockFiles = [
-      { 
-        name: 'src', 
-        path: 'src', 
-        type: 'dir' as const, 
+      {
+        name: 'src',
+        path: 'src',
+        type: 'dir' as const,
         size: 0,
         sha: 'dir-sha-123',
         url: 'https://api.github.com/repos/facebook/react/contents/src',
         html_url: 'https://github.com/facebook/react/tree/main/src',
-        git_url: 'https://api.github.com/repos/facebook/react/git/trees/dir-sha-123',
-        download_url: 'https://github.com/facebook/react/archive/refs/heads/main.zip'
+        git_url:
+          'https://api.github.com/repos/facebook/react/git/trees/dir-sha-123',
+        download_url:
+          'https://github.com/facebook/react/archive/refs/heads/main.zip',
       },
-      { 
-        name: 'package.json', 
-        path: 'package.json', 
-        type: 'file' as const, 
+      {
+        name: 'package.json',
+        path: 'package.json',
+        type: 'file' as const,
         size: 1024,
         sha: 'file-sha-456',
         url: 'https://api.github.com/repos/facebook/react/contents/package.json',
         html_url: 'https://github.com/facebook/react/blob/main/package.json',
-        git_url: 'https://api.github.com/repos/facebook/react/git/blobs/file-sha-456',
-        download_url: 'https://raw.githubusercontent.com/facebook/react/main/package.json'
+        git_url:
+          'https://api.github.com/repos/facebook/react/git/blobs/file-sha-456',
+        download_url:
+          'https://raw.githubusercontent.com/facebook/react/main/package.json',
       },
     ];
 
@@ -363,9 +405,16 @@ describe('RepositoryService', () => {
       repository.findOne.mockResolvedValue(mockRepository);
       githubService.listDirectoryContents.mockResolvedValue(mockFiles);
 
-      const result = await service.getRepositoryFiles(mockRepository.id, '', 'main');
+      const result = await service.getRepositoryFiles(
+        mockRepository.id,
+        '',
+        'main',
+      );
 
-      expect(githubService.listDirectoryContents).toHaveBeenCalledWith('', 'main');
+      expect(githubService.listDirectoryContents).toHaveBeenCalledWith(
+        '',
+        'main',
+      );
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe('src');
       expect(result[1].name).toBe('package.json');
@@ -374,7 +423,9 @@ describe('RepositoryService', () => {
     it('should throw NotFoundException when repository not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.getRepositoryFiles('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.getRepositoryFiles('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -386,8 +437,10 @@ describe('RepositoryService', () => {
       size: 1024,
       url: 'https://api.github.com/repos/facebook/react/contents/package.json',
       html_url: 'https://github.com/facebook/react/blob/main/package.json',
-      git_url: 'https://api.github.com/repos/facebook/react/git/blobs/file-sha-123',
-      download_url: 'https://raw.githubusercontent.com/facebook/react/main/package.json',
+      git_url:
+        'https://api.github.com/repos/facebook/react/git/blobs/file-sha-123',
+      download_url:
+        'https://raw.githubusercontent.com/facebook/react/main/package.json',
       type: 'file' as const,
       content: btoa('{"name": "react"}'), // Base64 encoded JSON
       encoding: 'base64',
@@ -397,9 +450,16 @@ describe('RepositoryService', () => {
       repository.findOne.mockResolvedValue(mockRepository);
       githubService.getFileContent.mockResolvedValue(mockFileContent);
 
-      const result = await service.getFileContent(mockRepository.id, 'package.json', 'main');
+      const result = await service.getFileContent(
+        mockRepository.id,
+        'package.json',
+        'main',
+      );
 
-      expect(githubService.getFileContent).toHaveBeenCalledWith('package.json', 'main');
+      expect(githubService.getFileContent).toHaveBeenCalledWith(
+        'package.json',
+        'main',
+      );
       expect(result.content).toBe('{"name": "react"}');
       expect(result.language).toBe('text');
       expect(result.size).toBe(1024);
@@ -413,7 +473,10 @@ describe('RepositoryService', () => {
         path: 'src/index.ts',
       });
 
-      const result = await service.getFileContent(mockRepository.id, 'src/index.ts');
+      const result = await service.getFileContent(
+        mockRepository.id,
+        'src/index.ts',
+      );
 
       expect(result.language).toBe('typescript');
     });
@@ -422,7 +485,9 @@ describe('RepositoryService', () => {
       repository.findOne.mockResolvedValue(mockRepository);
       githubService.getFileContent.mockResolvedValue(null);
 
-      await expect(service.getFileContent(mockRepository.id, 'nonexistent.txt')).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getFileContent(mockRepository.id, 'nonexistent.txt'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -447,4 +512,4 @@ describe('RepositoryService', () => {
       });
     });
   });
-}); 
+});

@@ -31,4 +31,4 @@ export abstract class BaseEntity {
   protected beforeUpdate(): void {
     this.updatedAt = new Date();
   }
-} 
+}

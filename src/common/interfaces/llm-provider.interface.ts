@@ -28,7 +28,9 @@ export interface LLMCompletionResponse {
 }
 
 export interface LLMProvider {
-  createCompletion(request: LLMCompletionRequest): Promise<LLMCompletionResponse>;
+  createCompletion(
+    request: LLMCompletionRequest,
+  ): Promise<LLMCompletionResponse>;
   getModel(): string;
   isAvailable(): Promise<boolean>;
-} 
+}

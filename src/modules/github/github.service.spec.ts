@@ -34,9 +34,10 @@ describe('GitHubService', () => {
 
     service = module.get<GitHubService>(GitHubService);
     configService = module.get<ConfigService>(ConfigService);
-    
+
     // Get the mocked Octokit instance
-    mockOctokit = (Octokit as jest.MockedClass<typeof Octokit>).mock.instances[0] as jest.Mocked<Octokit>;
+    mockOctokit = (Octokit as jest.MockedClass<typeof Octokit>).mock
+      .instances[0] as jest.Mocked<Octokit>;
   });
 
   it('should be defined', () => {
@@ -77,7 +78,9 @@ describe('GitHubService', () => {
         getRef: jest.fn().mockRejectedValue(new Error('Branch not found')),
       } as any;
 
-      await expect(service.createBranch('feature-branch')).rejects.toThrow('Branch not found');
+      await expect(service.createBranch('feature-branch')).rejects.toThrow(
+        'Branch not found',
+      );
     });
   });
 
@@ -89,9 +92,12 @@ describe('GitHubService', () => {
         sha: 'file-sha-123',
         size: 100,
         url: 'https://api.github.com/repos/test-owner/test-repo/contents/docs/test.md',
-        html_url: 'https://github.com/test-owner/test-repo/blob/main/docs/test.md',
-        git_url: 'https://api.github.com/repos/test-owner/test-repo/git/blobs/file-sha-123',
-        download_url: 'https://raw.githubusercontent.com/test-owner/test-repo/main/docs/test.md',
+        html_url:
+          'https://github.com/test-owner/test-repo/blob/main/docs/test.md',
+        git_url:
+          'https://api.github.com/repos/test-owner/test-repo/git/blobs/file-sha-123',
+        download_url:
+          'https://raw.githubusercontent.com/test-owner/test-repo/main/docs/test.md',
         type: 'file' as const,
         content: 'VGVzdCBjb250ZW50', // Base64 encoded "Test content"
         encoding: 'base64',
@@ -164,19 +170,21 @@ describe('GitHubService', () => {
       const result = await service.createFile('docs/test.md', request);
 
       expect(result).toBe('commit-sha-123');
-      expect(mockOctokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith({
-        owner: 'test-owner',
-        repo: 'test-repo',
-        path: 'docs/test.md',
-        message: 'Create test file',
-        content: Buffer.from('Test content', 'utf-8').toString('base64'),
-        branch: 'main',
-        author: {
-          name: 'Test Author',
-          email: 'test@example.com',
+      expect(mockOctokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
+        {
+          owner: 'test-owner',
+          repo: 'test-repo',
+          path: 'docs/test.md',
+          message: 'Create test file',
+          content: Buffer.from('Test content', 'utf-8').toString('base64'),
+          branch: 'main',
+          author: {
+            name: 'Test Author',
+            email: 'test@example.com',
+          },
+          committer: undefined,
         },
-        committer: undefined,
-      });
+      );
     });
   });
 
@@ -200,19 +208,21 @@ describe('GitHubService', () => {
       );
 
       expect(result).toBe('commit-sha-123');
-      expect(mockOctokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith({
-        owner: 'test-owner',
-        repo: 'test-repo',
-        path: 'docs/new-file.md',
-        message: 'Create new file',
-        content: Buffer.from('New content', 'utf-8').toString('base64'),
-        branch: 'main',
-        author: {
-          name: 'Knowledge Sync AI',
-          email: 'knowledge-sync-ai@example.com',
+      expect(mockOctokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
+        {
+          owner: 'test-owner',
+          repo: 'test-repo',
+          path: 'docs/new-file.md',
+          message: 'Create new file',
+          content: Buffer.from('New content', 'utf-8').toString('base64'),
+          branch: 'main',
+          author: {
+            name: 'Knowledge Sync AI',
+            email: 'knowledge-sync-ai@example.com',
+          },
+          committer: undefined,
         },
-        committer: undefined,
-      });
+      );
     });
 
     it('should update existing file', async () => {
@@ -250,20 +260,22 @@ describe('GitHubService', () => {
       );
 
       expect(result).toBe('update-commit-sha-123');
-      expect(mockOctokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith({
-        owner: 'test-owner',
-        repo: 'test-repo',
-        path: 'docs/existing.md',
-        message: 'Update existing file',
-        content: Buffer.from('Updated content', 'utf-8').toString('base64'),
-        sha: 'existing-sha-123',
-        branch: 'main',
-        author: {
-          name: 'Knowledge Sync AI',
-          email: 'knowledge-sync-ai@example.com',
+      expect(mockOctokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
+        {
+          owner: 'test-owner',
+          repo: 'test-repo',
+          path: 'docs/existing.md',
+          message: 'Update existing file',
+          content: Buffer.from('Updated content', 'utf-8').toString('base64'),
+          sha: 'existing-sha-123',
+          branch: 'main',
+          author: {
+            name: 'Knowledge Sync AI',
+            email: 'knowledge-sync-ai@example.com',
+          },
+          committer: undefined,
         },
-        committer: undefined,
-      });
+      );
     });
   });
 
@@ -335,7 +347,10 @@ describe('GitHubService', () => {
 
   describe('generateDocumentPath', () => {
     it('should generate proper document path without date', async () => {
-      const result = await service.generateDocumentPath('Product Planning', 'Feature Discussion');
+      const result = await service.generateDocumentPath(
+        'Product Planning',
+        'Feature Discussion',
+      );
 
       expect(result).toBe('docs/product-planning/feature-discussion.md');
     });
@@ -346,7 +361,9 @@ describe('GitHubService', () => {
         'Feature Discussion (Important)',
       );
 
-      expect(result).toBe('docs/product-planning---design-/feature-discussion--important-.md');
+      expect(result).toBe(
+        'docs/product-planning---design-/feature-discussion--important-.md',
+      );
     });
   });
 
@@ -413,4 +430,4 @@ describe('GitHubService', () => {
       expect(result).toBeNull();
     });
   });
-}); 
+});

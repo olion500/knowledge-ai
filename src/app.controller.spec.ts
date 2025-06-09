@@ -41,7 +41,7 @@ describe('AppController', () => {
   describe('health', () => {
     it('should return health status', () => {
       const result = appController.getHealth();
-      
+
       expect(result).toEqual({
         status: 'ok',
         timestamp: expect.any(String),
@@ -58,7 +58,9 @@ describe('AppController', () => {
         model: 'gpt-4-turbo-preview',
       };
 
-      mockLLMService.checkProviderAvailability.mockResolvedValue(mockProviderStatus);
+      mockLLMService.checkProviderAvailability.mockResolvedValue(
+        mockProviderStatus,
+      );
 
       const result = await appController.getLLMHealth();
 
@@ -80,7 +82,9 @@ describe('AppController', () => {
         model: 'llama2',
       };
 
-      mockLLMService.checkProviderAvailability.mockResolvedValue(mockProviderStatus);
+      mockLLMService.checkProviderAvailability.mockResolvedValue(
+        mockProviderStatus,
+      );
 
       const result = await appController.getLLMHealth();
 

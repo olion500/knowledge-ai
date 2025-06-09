@@ -54,10 +54,14 @@ describe('Repository (e2e)', () => {
     size: 1024,
     url: 'https://api.github.com/repos/testowner/testrepo/contents/package.json',
     html_url: 'https://github.com/testowner/testrepo/blob/main/package.json',
-    git_url: 'https://api.github.com/repos/testowner/testrepo/git/blobs/file-sha-123',
-    download_url: 'https://raw.githubusercontent.com/testowner/testrepo/main/package.json',
+    git_url:
+      'https://api.github.com/repos/testowner/testrepo/git/blobs/file-sha-123',
+    download_url:
+      'https://raw.githubusercontent.com/testowner/testrepo/main/package.json',
     type: 'file' as const,
-    content: Buffer.from('{"name": "testrepo", "version": "1.0.0"}').toString('base64'),
+    content: Buffer.from('{"name": "testrepo", "version": "1.0.0"}').toString(
+      'base64',
+    ),
     encoding: 'base64',
   };
 
@@ -96,9 +100,9 @@ describe('Repository (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
-    
+
     githubService = moduleFixture.get<GitHubService>(GitHubService);
-    
+
     await app.init();
   });
 
@@ -133,7 +137,9 @@ describe('Repository (e2e)', () => {
 
       expect(response.body.id).toBeDefined();
       expect(response.body.createdAt).toBeDefined();
-      expect(response.body.htmlUrl).toBe('https://github.com/testowner/testrepo');
+      expect(response.body.htmlUrl).toBe(
+        'https://github.com/testowner/testrepo',
+      );
 
       repositoryId = response.body.id;
     });
@@ -164,7 +170,7 @@ describe('Repository (e2e)', () => {
 
     it('should return 400 when GitHub repository not accessible', async () => {
       (githubService.getRepositoryInfo as jest.Mock).mockRejectedValueOnce(
-        new Error('Repository not found')
+        new Error('Repository not found'),
       );
 
       const createDto = {
@@ -178,7 +184,9 @@ describe('Repository (e2e)', () => {
         .expect(400);
 
       // Reset the mock
-      (githubService.getRepositoryInfo as jest.Mock).mockResolvedValue(mockGitHubRepoInfo);
+      (githubService.getRepositoryInfo as jest.Mock).mockResolvedValue(
+        mockGitHubRepoInfo,
+      );
     });
   });
 
@@ -336,7 +344,7 @@ describe('Repository (e2e)', () => {
             path: 'package.json',
             type: 'file',
           }),
-        ])
+        ]),
       );
     });
 
@@ -345,7 +353,10 @@ describe('Repository (e2e)', () => {
         .get(`/repositories/${repositoryId}/files?path=src`)
         .expect(200);
 
-      expect(githubService.listDirectoryContents).toHaveBeenCalledWith('src', undefined);
+      expect(githubService.listDirectoryContents).toHaveBeenCalledWith(
+        'src',
+        undefined,
+      );
     });
 
     it('should return files with custom branch', async () => {
@@ -353,7 +364,10 @@ describe('Repository (e2e)', () => {
         .get(`/repositories/${repositoryId}/files?branch=develop`)
         .expect(200);
 
-      expect(githubService.listDirectoryContents).toHaveBeenCalledWith('', 'develop');
+      expect(githubService.listDirectoryContents).toHaveBeenCalledWith(
+        '',
+        'develop',
+      );
     });
 
     it('should return 404 for non-existent repository', async () => {
@@ -366,7 +380,9 @@ describe('Repository (e2e)', () => {
   describe('GET /repositories/:id/files/content', () => {
     it('should return file content', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/repositories/${repositoryId}/files/content?filePath=package.json`)
+        .get(
+          `/repositories/${repositoryId}/files/content?filePath=package.json`,
+        )
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -384,7 +400,9 @@ describe('Repository (e2e)', () => {
       });
 
       const response = await request(app.getHttpServer())
-        .get(`/repositories/${repositoryId}/files/content?filePath=src/index.ts`)
+        .get(
+          `/repositories/${repositoryId}/files/content?filePath=src/index.ts`,
+        )
         .expect(200);
 
       expect(response.body.language).toBe('typescript');
@@ -392,10 +410,15 @@ describe('Repository (e2e)', () => {
 
     it('should return file content with custom branch', async () => {
       await request(app.getHttpServer())
-        .get(`/repositories/${repositoryId}/files/content?filePath=package.json&branch=develop`)
+        .get(
+          `/repositories/${repositoryId}/files/content?filePath=package.json&branch=develop`,
+        )
         .expect(200);
 
-      expect(githubService.getFileContent).toHaveBeenCalledWith('package.json', 'develop');
+      expect(githubService.getFileContent).toHaveBeenCalledWith(
+        'package.json',
+        'develop',
+      );
     });
 
     it('should return 400 when filePath is missing', async () => {
@@ -408,11 +431,15 @@ describe('Repository (e2e)', () => {
       (githubService.getFileContent as jest.Mock).mockResolvedValueOnce(null);
 
       await request(app.getHttpServer())
-        .get(`/repositories/${repositoryId}/files/content?filePath=nonexistent.txt`)
+        .get(
+          `/repositories/${repositoryId}/files/content?filePath=nonexistent.txt`,
+        )
         .expect(404);
 
       // Reset the mock
-      (githubService.getFileContent as jest.Mock).mockResolvedValue(mockFileContent);
+      (githubService.getFileContent as jest.Mock).mockResolvedValue(
+        mockFileContent,
+      );
     });
   });
 
@@ -475,7 +502,9 @@ describe('Repository (e2e)', () => {
 
       // 6. Get file content
       await request(app.getHttpServer())
-        .get(`/repositories/${integrationRepoId}/files/content?filePath=package.json`)
+        .get(
+          `/repositories/${integrationRepoId}/files/content?filePath=package.json`,
+        )
         .expect(200);
 
       // 7. Deactivate repository
@@ -493,7 +522,7 @@ describe('Repository (e2e)', () => {
     it('should handle error scenarios gracefully', async () => {
       // GitHub service errors
       (githubService.getRepositoryInfo as jest.Mock).mockRejectedValueOnce(
-        new Error('API rate limit exceeded')
+        new Error('API rate limit exceeded'),
       );
 
       await request(app.getHttpServer())
@@ -505,7 +534,9 @@ describe('Repository (e2e)', () => {
         .expect(400);
 
       // Reset mock
-      (githubService.getRepositoryInfo as jest.Mock).mockResolvedValue(mockGitHubRepoInfo);
+      (githubService.getRepositoryInfo as jest.Mock).mockResolvedValue(
+        mockGitHubRepoInfo,
+      );
     });
   });
-}); 
+});

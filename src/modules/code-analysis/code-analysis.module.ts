@@ -13,10 +13,7 @@ import { GitHubModule } from '../github/github.module';
     RepositoryModule,
     GitHubModule,
   ],
-  providers: [
-    CodeAnalysisService,
-    TypeScriptParser,
-  ],
+  providers: [CodeAnalysisService, TypeScriptParser],
   exports: [CodeAnalysisService],
 })
-export class CodeAnalysisModule {} 
+export class CodeAnalysisModule {}

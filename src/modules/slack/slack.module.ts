@@ -10,4 +10,4 @@ import { DocumentModule } from '../document/document.module';
   providers: [SlackService, SlackEventHandler],
   exports: [SlackService],
 })
-export class SlackModule {} 
+export class SlackModule {}

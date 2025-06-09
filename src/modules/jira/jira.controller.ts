@@ -10,7 +10,9 @@ export class JiraController {
 
   @Post('webhook')
   @HttpCode(200)
-  async handleJiraWebhook(@Body() event: JiraWebhookEvent): Promise<{ status: string }> {
+  async handleJiraWebhook(
+    @Body() event: JiraWebhookEvent,
+  ): Promise<{ status: string }> {
     this.logger.log(`Received Jira webhook: ${event.webhookEvent}`);
 
     try {
@@ -21,4 +23,4 @@ export class JiraController {
       return { status: 'error' };
     }
   }
-} 
+}

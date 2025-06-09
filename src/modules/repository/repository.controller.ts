@@ -213,7 +213,9 @@ export class RepositoryController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query('path') path = '',
     @Query('branch') branch?: string,
-  ): Promise<Array<{ name: string; path: string; type: 'file' | 'dir'; size?: number }>> {
+  ): Promise<
+    Array<{ name: string; path: string; type: 'file' | 'dir'; size?: number }>
+  > {
     return this.repositoryService.getRepositoryFiles(id, path, branch);
   }
 
@@ -255,4 +257,4 @@ export class RepositoryController {
   ): Promise<{ content: string; language: string; size: number }> {
     return this.repositoryService.getFileContent(id, filePath, branch);
   }
-} 
+}

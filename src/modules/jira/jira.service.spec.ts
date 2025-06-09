@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JiraService } from './jira.service';
 import { DocumentService } from '../document/document.service';
-import { JiraIssue, JiraWebhookEvent } from '../../common/interfaces/jira.interface';
+import {
+  JiraIssue,
+  JiraWebhookEvent,
+} from '../../common/interfaces/jira.interface';
 
 // Mock axios for HTTP requests
 jest.mock('axios');
@@ -99,7 +102,9 @@ describe('JiraService', () => {
 
       await service.processWebhookEvent(mockEvent);
 
-      expect(documentService.processJiraIssue).toHaveBeenCalledWith(mockEvent.issue);
+      expect(documentService.processJiraIssue).toHaveBeenCalledWith(
+        mockEvent.issue,
+      );
     });
 
     it('should process issue updated event', async () => {
@@ -164,7 +169,9 @@ describe('JiraService', () => {
 
       await service.processWebhookEvent(mockEvent);
 
-      expect(documentService.processJiraIssue).toHaveBeenCalledWith(mockEvent.issue);
+      expect(documentService.processJiraIssue).toHaveBeenCalledWith(
+        mockEvent.issue,
+      );
     });
 
     it('should ignore non-issue events', async () => {
@@ -349,4 +356,4 @@ describe('JiraService', () => {
       expect(result).not.toContain('Comments:');
     });
   });
-}); 
+});

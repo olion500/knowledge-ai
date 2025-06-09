@@ -85,7 +85,12 @@ describe('LLMService', () => {
       const result = await service.summarizeContent(mockRequest);
 
       expect(mockProvider.createCompletion).toHaveBeenCalledWith({
-        messages: [{ role: 'user', content: expect.stringContaining('Test slack conversation content') }],
+        messages: [
+          {
+            role: 'user',
+            content: expect.stringContaining('Test slack conversation content'),
+          },
+        ],
         responseFormat: { type: 'json_object' },
       });
 
@@ -99,7 +104,7 @@ describe('LLMService', () => {
       });
 
       expect(Logger.prototype.log).toHaveBeenCalledWith(
-        'Summarized slack content successfully using test-model'
+        'Summarized slack content successfully using test-model',
       );
     });
 
@@ -161,7 +166,7 @@ describe('LLMService', () => {
       mockProvider.createCompletion.mockResolvedValue({ content: '' });
 
       await expect(service.summarizeContent(mockRequest)).rejects.toThrow(
-        'No response from LLM provider'
+        'No response from LLM provider',
       );
     });
 
@@ -169,12 +174,19 @@ describe('LLMService', () => {
       const error = new Error('Provider error');
       mockProvider.createCompletion.mockRejectedValue(error);
 
-      await expect(service.summarizeContent(mockRequest)).rejects.toThrow('Provider error');
-      expect(Logger.prototype.error).toHaveBeenCalledWith('Failed to summarize content', error);
+      await expect(service.summarizeContent(mockRequest)).rejects.toThrow(
+        'Provider error',
+      );
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Failed to summarize content',
+        error,
+      );
     });
 
     it('should handle invalid JSON response', async () => {
-      mockProvider.createCompletion.mockResolvedValue({ content: 'invalid json' });
+      mockProvider.createCompletion.mockResolvedValue({
+        content: 'invalid json',
+      });
 
       await expect(service.summarizeContent(mockRequest)).rejects.toThrow();
     });
@@ -205,7 +217,12 @@ describe('LLMService', () => {
       const result = await service.classifyContent(mockRequest);
 
       expect(mockProvider.createCompletion).toHaveBeenCalledWith({
-        messages: [{ role: 'user', content: expect.stringContaining('Test content to classify') }],
+        messages: [
+          {
+            role: 'user',
+            content: expect.stringContaining('Test content to classify'),
+          },
+        ],
         maxTokens: 1000,
         responseFormat: { type: 'json_object' },
       });
@@ -218,7 +235,7 @@ describe('LLMService', () => {
       });
 
       expect(Logger.prototype.log).toHaveBeenCalledWith(
-        'Classified content as topic: development using test-model'
+        'Classified content as topic: development using test-model',
       );
     });
 
@@ -239,7 +256,9 @@ describe('LLMService', () => {
       const calledWith = mockProvider.createCompletion.mock.calls[0][0];
       const prompt = calledWith.messages[0].content;
 
-      expect(prompt).toContain('Available topics: development, support, general');
+      expect(prompt).toContain(
+        'Available topics: development, support, general',
+      );
       expect(prompt).toContain('Source: slack');
       expect(prompt).toContain('Test content to classify');
       expect(prompt).toContain('JSON response');
@@ -273,7 +292,8 @@ describe('LLMService', () => {
       const mockResponse = {
         content: JSON.stringify({
           title: 'Development Discussion',
-          content: '# 📄 Development Discussion\n\n---\n\n## 1. TL;DR\n\n간략한 요약 (3~5줄):\n- Test content for development discussion\n\nTest PRD content',
+          content:
+            '# 📄 Development Discussion\n\n---\n\n## 1. TL;DR\n\n간략한 요약 (3~5줄):\n- Test content for development discussion\n\nTest PRD content',
           metadata: {
             topic: 'development',
             tags: ['dev', 'code'],
@@ -290,7 +310,9 @@ describe('LLMService', () => {
       const result = await service.generateDocument(mockRequest);
 
       expect(mockProvider.createCompletion).toHaveBeenCalledWith({
-        messages: [{ role: 'user', content: expect.stringContaining('Summary data:') }],
+        messages: [
+          { role: 'user', content: expect.stringContaining('Summary data:') },
+        ],
         responseFormat: { type: 'json_object' },
       });
 
@@ -298,7 +320,7 @@ describe('LLMService', () => {
       expect(result.isUpdate).toBe(false);
 
       expect(Logger.prototype.log).toHaveBeenCalledWith(
-        'Generated document: Development Discussion using test-model'
+        'Generated document: Development Discussion using test-model',
       );
     });
 
@@ -364,7 +386,9 @@ describe('LLMService', () => {
 
   describe('error handling', () => {
     it('should handle JSON parsing errors in all methods', async () => {
-      mockProvider.createCompletion.mockResolvedValue({ content: 'invalid json' });
+      mockProvider.createCompletion.mockResolvedValue({
+        content: 'invalid json',
+      });
 
       const summaryRequest: SummaryRequest = {
         content: 'Test',
@@ -383,8 +407,13 @@ describe('LLMService', () => {
         contentType: 'slack',
       };
 
-      await expect(service.summarizeContent(summaryRequest)).rejects.toThrow('Test error');
-      expect(Logger.prototype.error).toHaveBeenCalledWith('Failed to summarize content', error);
+      await expect(service.summarizeContent(summaryRequest)).rejects.toThrow(
+        'Test error',
+      );
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Failed to summarize content',
+        error,
+      );
     });
   });
 
@@ -392,7 +421,8 @@ describe('LLMService', () => {
     it('should identify similar documents', async () => {
       const mockSimilarity = {
         similarityScore: 0.85,
-        reasoning: 'Both documents discuss the same product feature with minor differences',
+        reasoning:
+          'Both documents discuss the same product feature with minor differences',
         keyDifferences: ['Slight wording changes', 'Updated participant list'],
       };
 
@@ -403,7 +433,8 @@ describe('LLMService', () => {
       });
 
       const request = {
-        existingContent: '# Product Feature\n\nThis document discusses the new login feature implementation...',
+        existingContent:
+          '# Product Feature\n\nThis document discusses the new login feature implementation...',
         newSummary: {
           summary: 'Discussion about login feature implementation',
           keyPoints: ['Feature requirements', 'Implementation approach'],
@@ -429,7 +460,12 @@ describe('LLMService', () => {
 
       expect(result).toEqual(mockSimilarity);
       expect(mockProvider.createCompletion).toHaveBeenCalledWith({
-        messages: [{ role: 'user', content: expect.stringContaining('semantic similarity') }],
+        messages: [
+          {
+            role: 'user',
+            content: expect.stringContaining('semantic similarity'),
+          },
+        ],
         maxTokens: 1000,
         responseFormat: { type: 'json_object' },
       });
@@ -439,7 +475,11 @@ describe('LLMService', () => {
       const mockSimilarity = {
         similarityScore: 0.3,
         reasoning: 'Documents discuss different aspects of the system',
-        keyDifferences: ['Different decisions made', 'New action items', 'Different participants'],
+        keyDifferences: [
+          'Different decisions made',
+          'New action items',
+          'Different participants',
+        ],
       };
 
       mockProvider.createCompletion.mockResolvedValue({
@@ -449,7 +489,8 @@ describe('LLMService', () => {
       });
 
       const request = {
-        existingContent: '# Security Policy\n\nThis document outlines security requirements...',
+        existingContent:
+          '# Security Policy\n\nThis document outlines security requirements...',
         newSummary: {
           summary: 'Discussion about new payment integration',
           keyPoints: ['Payment gateway selection', 'Security considerations'],
@@ -470,7 +511,12 @@ describe('LLMService', () => {
 
       expect(result).toEqual(mockSimilarity);
       expect(mockProvider.createCompletion).toHaveBeenCalledWith({
-        messages: [{ role: 'user', content: expect.stringContaining('semantic similarity') }],
+        messages: [
+          {
+            role: 'user',
+            content: expect.stringContaining('semantic similarity'),
+          },
+        ],
         maxTokens: 1000,
         responseFormat: { type: 'json_object' },
       });
@@ -485,7 +531,9 @@ describe('LLMService', () => {
         classification: {} as any,
       };
 
-      await expect(service.compareDocumentSimilarity(request)).rejects.toThrow('API Error');
+      await expect(service.compareDocumentSimilarity(request)).rejects.toThrow(
+        'API Error',
+      );
     });
 
     it('should use default threshold when not specified', async () => {
@@ -524,10 +572,15 @@ describe('LLMService', () => {
 
       expect(result).toEqual(mockSimilarity);
       expect(mockProvider.createCompletion).toHaveBeenCalledWith({
-        messages: [{ role: 'user', content: expect.stringContaining('semantic similarity') }],
+        messages: [
+          {
+            role: 'user',
+            content: expect.stringContaining('semantic similarity'),
+          },
+        ],
         maxTokens: 1000,
         responseFormat: { type: 'json_object' },
       });
     });
   });
-}); 
+});

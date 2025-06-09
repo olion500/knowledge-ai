@@ -259,7 +259,9 @@ describe('SlackController', () => {
         'memo',
         expect.any(String),
       );
-      expect(documentService.processSlackMessages).toHaveBeenCalledWith(mockMessages);
+      expect(documentService.processSlackMessages).toHaveBeenCalledWith(
+        mockMessages,
+      );
     });
 
     it('should collect messages with keywords', async () => {
@@ -357,7 +359,8 @@ describe('SlackController', () => {
       await controller.collectMessages(request);
 
       // Verify that the oldest timestamp is calculated with 24 hours (default)
-      const expectedOldest = new Date(Date.now() - 24 * 60 * 60 * 1000).getTime() / 1000;
+      const expectedOldest =
+        new Date(Date.now() - 24 * 60 * 60 * 1000).getTime() / 1000;
       expect(slackService.getMessagesWithReaction).toHaveBeenCalledWith(
         'C1234567890',
         'memo',
@@ -415,4 +418,4 @@ describe('SlackController', () => {
       expect(documentService.processSlackMessages).not.toHaveBeenCalled();
     });
   });
-}); 
+});

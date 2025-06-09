@@ -30,7 +30,7 @@ export class LLMService {
   async summarizeContent(request: SummaryRequest): Promise<SummaryResponse> {
     try {
       const prompt = this.buildSummaryPrompt(request);
-      
+
       const completion = await this.provider.createCompletion({
         messages: [{ role: 'user', content: prompt }],
         responseFormat: { type: 'json_object' },
@@ -41,8 +41,10 @@ export class LLMService {
       }
 
       const parsed = JSON.parse(completion.content) as SummaryResponse;
-      
-      this.logger.log(`Summarized ${request.contentType} content successfully using ${this.provider.getModel()}`);
+
+      this.logger.log(
+        `Summarized ${request.contentType} content successfully using ${this.provider.getModel()}`,
+      );
       return parsed;
     } catch (error) {
       this.logger.error('Failed to summarize content', error);
@@ -50,10 +52,12 @@ export class LLMService {
     }
   }
 
-  async classifyContent(request: ClassificationRequest): Promise<ClassificationResponse> {
+  async classifyContent(
+    request: ClassificationRequest,
+  ): Promise<ClassificationResponse> {
     try {
       const prompt = this.buildClassificationPrompt(request);
-      
+
       const completion = await this.provider.createCompletion({
         messages: [{ role: 'user', content: prompt }],
         maxTokens: 1000,
@@ -65,8 +69,10 @@ export class LLMService {
       }
 
       const parsed = JSON.parse(completion.content) as ClassificationResponse;
-      
-      this.logger.log(`Classified content as topic: ${parsed.topic} using ${this.provider.getModel()}`);
+
+      this.logger.log(
+        `Classified content as topic: ${parsed.topic} using ${this.provider.getModel()}`,
+      );
       return parsed;
     } catch (error) {
       this.logger.error('Failed to classify content', error);
@@ -74,10 +80,12 @@ export class LLMService {
     }
   }
 
-  async generateDocument(request: DocumentGenerationRequest): Promise<DocumentGenerationResponse> {
+  async generateDocument(
+    request: DocumentGenerationRequest,
+  ): Promise<DocumentGenerationResponse> {
     try {
       const prompt = this.buildDocumentGenerationPrompt(request);
-      
+
       const completion = await this.provider.createCompletion({
         messages: [{ role: 'user', content: prompt }],
         responseFormat: { type: 'json_object' },
@@ -87,9 +95,13 @@ export class LLMService {
         throw new Error('No response from LLM provider');
       }
 
-      const parsed = JSON.parse(completion.content) as DocumentGenerationResponse;
-      
-      this.logger.log(`Generated document: ${parsed.title} using ${this.provider.getModel()}`);
+      const parsed = JSON.parse(
+        completion.content,
+      ) as DocumentGenerationResponse;
+
+      this.logger.log(
+        `Generated document: ${parsed.title} using ${this.provider.getModel()}`,
+      );
       return parsed;
     } catch (error) {
       this.logger.error('Failed to generate document', error);
@@ -97,10 +109,12 @@ export class LLMService {
     }
   }
 
-  async compareDocumentSimilarity(request: DocumentSimilarityRequest): Promise<DocumentSimilarityResponse> {
+  async compareDocumentSimilarity(
+    request: DocumentSimilarityRequest,
+  ): Promise<DocumentSimilarityResponse> {
     try {
       const prompt = this.buildSimilarityPrompt(request);
-      
+
       const completion = await this.provider.createCompletion({
         messages: [{ role: 'user', content: prompt }],
         maxTokens: 1000,
@@ -111,9 +125,13 @@ export class LLMService {
         throw new Error('No response from LLM provider');
       }
 
-      const parsed = JSON.parse(completion.content) as DocumentSimilarityResponse;
-      
-      this.logger.log(`Compared document similarity: score ${parsed.similarityScore} using ${this.provider.getModel()}`);
+      const parsed = JSON.parse(
+        completion.content,
+      ) as DocumentSimilarityResponse;
+
+      this.logger.log(
+        `Compared document similarity: score ${parsed.similarityScore} using ${this.provider.getModel()}`,
+      );
       return parsed;
     } catch (error) {
       this.logger.error('Failed to compare document similarity', error);
@@ -121,7 +139,11 @@ export class LLMService {
     }
   }
 
-  async checkProviderAvailability(): Promise<{ available: boolean; provider: string; model: string }> {
+  async checkProviderAvailability(): Promise<{
+    available: boolean;
+    provider: string;
+    model: string;
+  }> {
     const available = await this.provider.isAvailable();
     return {
       available,
@@ -131,11 +153,13 @@ export class LLMService {
   }
 
   private buildSummaryPrompt(request: SummaryRequest): string {
-    const contextInfo = request.context ? `
+    const contextInfo = request.context
+      ? `
 Context:
 - Channel/Project: ${request.context.channel || request.context.project || 'Unknown'}
 - Participants: ${request.context.participants?.join(', ') || 'Unknown'}
-` : '';
+`
+      : '';
 
     return `
 You are an AI assistant that summarizes ${request.contentType} conversations and issues.
@@ -166,10 +190,12 @@ Focus on:
 
   private buildClassificationPrompt(request: ClassificationRequest): string {
     const availableTopics = request.availableTopics.join(', ');
-    const contextInfo = request.context ? `
+    const contextInfo = request.context
+      ? `
 Source: ${request.context.source}
 Additional context: ${JSON.stringify(request.context.metadata || {})}
-` : '';
+`
+      : '';
 
     return `
 You are an AI assistant that classifies content into predefined topics.
@@ -193,12 +219,16 @@ Choose the topic that best matches the content. If no topic is a good fit, choos
 `;
   }
 
-  private buildDocumentGenerationPrompt(request: DocumentGenerationRequest): string {
+  private buildDocumentGenerationPrompt(
+    request: DocumentGenerationRequest,
+  ): string {
     const isUpdate = !!request.existingDocument;
-    const existingDocSection = isUpdate ? `
+    const existingDocSection = isUpdate
+      ? `
 Existing document to update:
 ${request.existingDocument}
-` : '';
+`
+      : '';
 
     return `
 You are an AI assistant that generates comprehensive PRD (Product Requirements Document) style markdown documentation from summarized content.
@@ -334,11 +364,13 @@ ${isUpdate ? 'If updating an existing document, merge the new information approp
   }
 
   private buildSimilarityPrompt(request: DocumentSimilarityRequest): string {
-    const contextInfo = request.context ? `
+    const contextInfo = request.context
+      ? `
 Context:
 - Source: ${request.context.source}
 - Participants: ${request.context.participants?.join(', ') || 'Unknown'}
-` : '';
+`
+      : '';
 
     const threshold = request.similarityThreshold || 0.7;
 
@@ -381,4 +413,4 @@ Guidelines:
 - Be conservative - when in doubt, assign a lower similarity score to avoid losing important updates
 `;
   }
-} 
+}

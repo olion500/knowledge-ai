@@ -90,7 +90,9 @@ export class DocumentService {
       },
     };
 
-    const classification = await this.llmService.classifyContent(classificationRequest);
+    const classification = await this.llmService.classifyContent(
+      classificationRequest,
+    );
     this.logger.log(`Classified content as topic: ${classification.topic}`);
 
     // Step 4: Check for existing document
@@ -104,14 +106,20 @@ export class DocumentService {
         existingDocument.path,
       );
       if (fileContent && fileContent.content) {
-        existingContent = Buffer.from(fileContent.content, 'base64').toString('utf-8');
-        
+        existingContent = Buffer.from(fileContent.content, 'base64').toString(
+          'utf-8',
+        );
+
         // Step 4.5: Check similarity with existing document
-        this.logger.log(`Found existing document for topic ${classification.topic}, checking similarity...`);
-        
-        const similarityThreshold = parseFloat(this.configService.get<string>('SIMILARITY_THRESHOLD', '0.7'));
+        this.logger.log(
+          `Found existing document for topic ${classification.topic}, checking similarity...`,
+        );
+
+        const similarityThreshold = parseFloat(
+          this.configService.get<string>('SIMILARITY_THRESHOLD', '0.7'),
+        );
         this.logger.log(`Using similarity threshold: ${similarityThreshold}`);
-        
+
         const similarityRequest: DocumentSimilarityRequest = {
           existingContent,
           newSummary: summary,
@@ -123,22 +131,33 @@ export class DocumentService {
           },
         };
 
-        const similarity = await this.llmService.compareDocumentSimilarity(similarityRequest);
-        
+        const similarity =
+          await this.llmService.compareDocumentSimilarity(similarityRequest);
+
         // Server-side similarity determination
         const isSimilar = similarity.similarityScore > similarityThreshold;
-        
-        this.logger.log(`Similarity check result: ${isSimilar ? 'Similar' : 'Different'} (score: ${similarity.similarityScore})`);
+
+        this.logger.log(
+          `Similarity check result: ${isSimilar ? 'Similar' : 'Different'} (score: ${similarity.similarityScore})`,
+        );
         this.logger.log(`Reasoning: ${similarity.reasoning}`);
 
         if (isSimilar) {
-          this.logger.log('Content is too similar to existing document, skipping PR creation');
-          this.logger.log(`Key differences found: ${similarity.keyDifferences.join(', ')}`);
+          this.logger.log(
+            'Content is too similar to existing document, skipping PR creation',
+          );
+          this.logger.log(
+            `Key differences found: ${similarity.keyDifferences.join(', ')}`,
+          );
           return; // Exit early, don't create PR
         } else {
-          this.logger.log('Content is sufficiently different, proceeding with document update');
+          this.logger.log(
+            'Content is sufficiently different, proceeding with document update',
+          );
           if (similarity.keyDifferences.length > 0) {
-            this.logger.log(`Key differences: ${similarity.keyDifferences.join(', ')}`);
+            this.logger.log(
+              `Key differences: ${similarity.keyDifferences.join(', ')}`,
+            );
           }
         }
       }
@@ -184,16 +203,23 @@ export class DocumentService {
       const defaultReviewers = this.configService
         .get<string>('DEFAULT_REVIEWERS', '')
         .split(',')
-        .map(reviewer => reviewer.trim())
+        .map((reviewer) => reviewer.trim())
         .filter(Boolean);
 
-      this.logger.log(`Configured reviewers: ${defaultReviewers.length > 0 ? defaultReviewers.join(', ') : 'none'}`);
+      this.logger.log(
+        `Configured reviewers: ${defaultReviewers.length > 0 ? defaultReviewers.join(', ') : 'none'}`,
+      );
 
       const prTitle = document.isUpdate
         ? `📝 Update: ${document.title}`
         : `📄 New: ${document.title}`;
 
-      const prBody = this.generatePRDescription(document, summary, classification, source);
+      const prBody = this.generatePRDescription(
+        document,
+        summary,
+        classification,
+        source,
+      );
 
       const pullRequest = await this.githubService.createPullRequest({
         title: prTitle,
@@ -201,17 +227,26 @@ export class DocumentService {
         head: branchName,
         base: 'main',
         reviewers: defaultReviewers.length > 0 ? defaultReviewers : undefined,
-        labels: ['documentation', `topic:${classification.topic}`, `source:${source}`],
+        labels: [
+          'documentation',
+          `topic:${classification.topic}`,
+          `source:${source}`,
+        ],
       });
 
       this.logger.log(`Created PR #${pullRequest.number}: ${pullRequest.url}`);
     } catch (githubError) {
-      this.logger.error('GitHub operations failed, but document processing completed successfully', githubError);
-      this.logger.warn('Document was generated but not pushed to GitHub. Please check GitHub configuration and permissions.');
-      
+      this.logger.error(
+        'GitHub operations failed, but document processing completed successfully',
+        githubError,
+      );
+      this.logger.warn(
+        'Document was generated but not pushed to GitHub. Please check GitHub configuration and permissions.',
+      );
+
       // Log the document content for manual handling if needed
       this.logger.log(`Generated document content:\n${document.content}`);
-      
+
       // Don't throw the error - allow the process to complete successfully
       // The LLM processing was successful even if GitHub integration failed
     }
@@ -222,11 +257,11 @@ export class DocumentService {
 
     for (const message of messages) {
       const key = message.threadTs || message.id;
-      
+
       if (!conversations.has(key)) {
         conversations.set(key, []);
       }
-      
+
       conversations.get(key)!.push(message);
     }
 
@@ -240,35 +275,38 @@ export class DocumentService {
     if (source === 'slack') {
       const messages = content as SlackMessage[];
       const resolvedMessages: string[] = [];
-      
+
       for (const msg of messages) {
         try {
           const userInfo = await this.slackService.getUserInfo(msg.user);
           const userName = userInfo?.realName || userInfo?.name || msg.user;
           resolvedMessages.push(`[${userName}]: ${msg.text}`);
         } catch (error) {
-          this.logger.warn(`Failed to resolve user ${msg.user} in message content`, error);
+          this.logger.warn(
+            `Failed to resolve user ${msg.user} in message content`,
+            error,
+          );
           resolvedMessages.push(`[${msg.user}]: ${msg.text}`);
         }
       }
-      
+
       return resolvedMessages.join('\n');
     } else {
       const issues = content as JiraIssue[];
       const issue = issues[0]; // Single issue for Jira
-      
+
       let text = `Title: ${issue.summary}\n`;
       if (issue.description) {
         text += `Description: ${issue.description}\n`;
       }
-      
+
       if (issue.comments.length > 0) {
         text += '\nComments:\n';
         text += issue.comments
-          .map(comment => `[${comment.author.displayName}]: ${comment.body}`)
+          .map((comment) => `[${comment.author.displayName}]: ${comment.body}`)
           .join('\n');
       }
-      
+
       return text;
     }
   }
@@ -279,11 +317,11 @@ export class DocumentService {
   ): Promise<any> {
     if (source === 'slack') {
       const messages = content as SlackMessage[];
-      const userIds = [...new Set(messages.map(msg => msg.user))];
-      
+      const userIds = [...new Set(messages.map((msg) => msg.user))];
+
       // Resolve user IDs to real names
       const participants = await this.resolveSlackUserNames(userIds);
-      
+
       return {
         channel: messages[0]?.channel,
         participants,
@@ -292,20 +330,20 @@ export class DocumentService {
     } else {
       const issues = content as JiraIssue[];
       const issue = issues[0];
-      
+
       const participants = [
         issue.reporter.displayName,
         ...(issue.assignee ? [issue.assignee.displayName] : []),
-        ...issue.comments.map(comment => comment.author.displayName),
+        ...issue.comments.map((comment) => comment.author.displayName),
       ];
-      
+
       return {
         project: issue.project.key,
         participants: [...new Set(participants)],
         issueType: issue.issueType,
         priority: issue.priority,
         status: issue.status,
-        components: issue.components.map(c => c.name),
+        components: issue.components.map((c) => c.name),
         labels: issue.labels,
       };
     }
@@ -313,7 +351,7 @@ export class DocumentService {
 
   private async resolveSlackUserNames(userIds: string[]): Promise<string[]> {
     const names: string[] = [];
-    
+
     for (const userId of userIds) {
       try {
         const userInfo = await this.slackService.getUserInfo(userId);
@@ -324,11 +362,14 @@ export class DocumentService {
           names.push(userId);
         }
       } catch (error) {
-        this.logger.warn(`Failed to resolve user ${userId}, using ID instead`, error);
+        this.logger.warn(
+          `Failed to resolve user ${userId}, using ID instead`,
+          error,
+        );
         names.push(userId);
       }
     }
-    
+
     return names;
   }
 
@@ -348,11 +389,15 @@ export class DocumentService {
 ### Summary
 ${summary.summary}
 
-${document.isUpdate ? `### Changes
-${document.changesSummary}` : ''}
+${
+  document.isUpdate
+    ? `### Changes
+${document.changesSummary}`
+    : ''
+}
 
 ---
 *Automatically generated by Knowledge Sync AI*
 `;
   }
-} 
+}

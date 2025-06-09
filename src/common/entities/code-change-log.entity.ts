@@ -55,27 +55,27 @@ export class CodeChangeLog extends BaseEntity {
     linesAdded?: number;
     linesDeleted?: number;
     linesModified?: number;
-    
+
     // Position changes
     oldStartLine?: number;
     oldEndLine?: number;
     newStartLine?: number;
     newEndLine?: number;
-    
+
     // Signature changes
     oldSignature?: string;
     newSignature?: string;
     oldFingerprint?: string;
     newFingerprint?: string;
-    
+
     // Content changes
     similarityScore?: number; // 0-1, how similar the new version is
     diffSummary?: string;
-    
+
     // Impact analysis
     affectedTests?: string[];
     affectedDependencies?: string[];
-    
+
     [key: string]: any;
   };
 
@@ -122,8 +122,9 @@ export class CodeChangeLog extends BaseEntity {
 
   get impactLevel(): 'low' | 'medium' | 'high' {
     const { changeDetails } = this;
-    const totalLines = (changeDetails.linesAdded || 0) + (changeDetails.linesDeleted || 0);
-    
+    const totalLines =
+      (changeDetails.linesAdded || 0) + (changeDetails.linesDeleted || 0);
+
     if (this.changeType === 'deleted' || totalLines > 50) {
       return 'high';
     } else if (this.changeType === 'added' || totalLines > 10) {
@@ -132,4 +133,4 @@ export class CodeChangeLog extends BaseEntity {
       return 'low';
     }
   }
-} 
+}

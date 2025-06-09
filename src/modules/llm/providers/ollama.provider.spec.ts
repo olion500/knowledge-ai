@@ -51,9 +51,9 @@ describe('OllamaProvider', () => {
     it('should use default host when baseUrl not provided', () => {
       const configWithoutBaseUrl = { ...config };
       delete configWithoutBaseUrl.baseUrl;
-      
+
       new OllamaProvider(configWithoutBaseUrl);
-      
+
       expect(MockedOllama).toHaveBeenCalledWith({
         host: 'http://localhost:11434',
       });
@@ -85,7 +85,8 @@ describe('OllamaProvider', () => {
 
       expect(mockOllama.generate).toHaveBeenCalledWith({
         model: 'llama2',
-        prompt: 'System: You are a helpful assistant\n\nHuman: Test message\n\nPlease respond with valid JSON only.',
+        prompt:
+          'System: You are a helpful assistant\n\nHuman: Test message\n\nPlease respond with valid JSON only.',
         options: {
           temperature: 0.5,
           num_predict: 1000,
@@ -219,8 +220,13 @@ describe('OllamaProvider', () => {
       const error = new Error('Ollama connection failed');
       mockOllama.generate.mockRejectedValue(error);
 
-      await expect(provider.createCompletion(mockRequest)).rejects.toThrow('Ollama connection failed');
-      expect(Logger.prototype.error).toHaveBeenCalledWith('Ollama completion failed', error);
+      await expect(provider.createCompletion(mockRequest)).rejects.toThrow(
+        'Ollama connection failed',
+      );
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Ollama completion failed',
+        error,
+      );
     });
 
     it('should set finish reason based on done status', async () => {
@@ -260,7 +266,7 @@ describe('OllamaProvider', () => {
           options: expect.objectContaining({
             temperature: 0,
           }),
-        })
+        }),
       );
     });
   });
@@ -286,8 +292,9 @@ describe('OllamaProvider', () => {
 
       expect(mockOllama.generate).toHaveBeenCalledWith(
         expect.objectContaining({
-          prompt: 'System: System message\n\nHuman: User message\n\nAssistant: Assistant message',
-        })
+          prompt:
+            'System: System message\n\nHuman: User message\n\nAssistant: Assistant message',
+        }),
       );
     });
   });
@@ -318,10 +325,7 @@ describe('OllamaProvider', () => {
 
     it('should return false when model is not available', async () => {
       const mockModels = {
-        models: [
-          { name: 'codellama:7b' },
-          { name: 'mistral:latest' },
-        ],
+        models: [{ name: 'codellama:7b' }, { name: 'mistral:latest' }],
       };
 
       mockOllama.list.mockResolvedValue(mockModels as any);
@@ -338,14 +342,15 @@ describe('OllamaProvider', () => {
       const result = await provider.isAvailable();
 
       expect(result).toBe(false);
-      expect(Logger.prototype.warn).toHaveBeenCalledWith('Ollama availability check failed', error);
+      expect(Logger.prototype.warn).toHaveBeenCalledWith(
+        'Ollama availability check failed',
+        error,
+      );
     });
 
     it('should match partial model names', async () => {
       const mockModels = {
-        models: [
-          { name: 'llama2:7b-chat' },
-        ],
+        models: [{ name: 'llama2:7b-chat' }],
       };
 
       mockOllama.list.mockResolvedValue(mockModels as any);
@@ -355,4 +360,4 @@ describe('OllamaProvider', () => {
       expect(result).toBe(true); // Should match because 'llama2:7b-chat' includes 'llama2'
     });
   });
-}); 
+});

@@ -30,7 +30,10 @@ export class CodeAnalysisService {
     private readonly typescriptParser: TypeScriptParser,
   ) {}
 
-  async analyzeRepository(repositoryId: string, commitSha?: string): Promise<{
+  async analyzeRepository(
+    repositoryId: string,
+    commitSha?: string,
+  ): Promise<{
     totalFiles: number;
     analyzedFiles: number;
     functions: number;
@@ -38,20 +41,24 @@ export class CodeAnalysisService {
     errors: string[];
   }> {
     this.logger.log(`Starting analysis for repository ${repositoryId}`);
-    
+
     try {
       const repository = await this.repositoryService.findOne(repositoryId);
       const targetCommitSha = commitSha || repository.lastCommitSha;
-      
+
       if (!targetCommitSha) {
         throw new Error('No commit SHA available for analysis');
       }
 
       // Get all files in the repository
-      const files = await this.githubService.getRepositoryContents(repository.owner, repository.name, targetCommitSha);
-      
-      const analyzableFiles = files.filter(file => 
-        file.type === 'file' && this.isAnalyzableFile(file.name)
+      const files = await this.githubService.getRepositoryContents(
+        repository.owner,
+        repository.name,
+        targetCommitSha,
+      );
+
+      const analyzableFiles = files.filter(
+        (file) => file.type === 'file' && this.isAnalyzableFile(file.name),
       );
 
       let analyzedCount = 0;
@@ -71,13 +78,15 @@ export class CodeAnalysisService {
 
       // Count total functions and classes
       const structures = await this.codeStructureRepository.find({
-        where: { repositoryId, commitSha: targetCommitSha }
+        where: { repositoryId, commitSha: targetCommitSha },
       });
-      
-      totalFunctions = structures.filter(s => !s.className).length;
-      totalClasses = structures.filter(s => s.className).length;
 
-      this.logger.log(`Analysis completed for repository ${repositoryId}: ${analyzedCount}/${analyzableFiles.length} files`);
+      totalFunctions = structures.filter((s) => !s.className).length;
+      totalClasses = structures.filter((s) => s.className).length;
+
+      this.logger.log(
+        `Analysis completed for repository ${repositoryId}: ${analyzedCount}/${analyzableFiles.length} files`,
+      );
 
       return {
         totalFiles: analyzableFiles.length,
@@ -92,27 +101,40 @@ export class CodeAnalysisService {
     }
   }
 
-  async analyzeFile(repositoryId: string, filePath: string, commitSha: string): Promise<CodeAnalysisResult> {
+  async analyzeFile(
+    repositoryId: string,
+    filePath: string,
+    commitSha: string,
+  ): Promise<CodeAnalysisResult> {
     this.logger.debug(`Analyzing file ${filePath} at commit ${commitSha}`);
 
     try {
       const repository = await this.repositoryService.findOne(repositoryId);
-      
+
       // Get file content from GitHub
-      const fileContent = await this.githubService.getFileContent(filePath, commitSha);
+      const fileContent = await this.githubService.getFileContent(
+        filePath,
+        commitSha,
+      );
       if (!fileContent || !fileContent.content) {
         throw new Error(`File ${filePath} not found`);
       }
 
-      const sourceCode = Buffer.from(fileContent.content, 'base64').toString('utf-8');
+      const sourceCode = Buffer.from(fileContent.content, 'base64').toString(
+        'utf-8',
+      );
       const language = this.detectLanguage(filePath);
-      
+
       // Parse the file based on language
-      const analysisResult = await this.parseFile(filePath, sourceCode, language);
-      
+      const analysisResult = await this.parseFile(
+        filePath,
+        sourceCode,
+        language,
+      );
+
       // Store or update code structures
       await this.storeCodeStructures(repositoryId, analysisResult, commitSha);
-      
+
       return analysisResult;
     } catch (error) {
       this.logger.error(`Failed to analyze file ${filePath}:`, error);
@@ -123,23 +145,35 @@ export class CodeAnalysisService {
   async compareCommits(
     repositoryId: string,
     fromCommitSha: string,
-    toCommitSha: string
+    toCommitSha: string,
   ): Promise<CodeStructureComparison> {
-    this.logger.log(`Comparing commits ${fromCommitSha} -> ${toCommitSha} for repository ${repositoryId}`);
+    this.logger.log(
+      `Comparing commits ${fromCommitSha} -> ${toCommitSha} for repository ${repositoryId}`,
+    );
 
     try {
       // Get code structures for both commits
       const oldStructures = await this.codeStructureRepository.find({
-        where: { repositoryId, commitSha: fromCommitSha }
+        where: { repositoryId, commitSha: fromCommitSha },
       });
 
       const newStructures = await this.codeStructureRepository.find({
-        where: { repositoryId, commitSha: toCommitSha }
+        where: { repositoryId, commitSha: toCommitSha },
       });
 
       // Convert to maps for easier comparison
-      const oldMap = new Map(oldStructures.map(s => [s.fingerprint, this.structureToFunctionInfo(s)]));
-      const newMap = new Map(newStructures.map(s => [s.fingerprint, this.structureToFunctionInfo(s)]));
+      const oldMap = new Map(
+        oldStructures.map((s) => [
+          s.fingerprint,
+          this.structureToFunctionInfo(s),
+        ]),
+      );
+      const newMap = new Map(
+        newStructures.map((s) => [
+          s.fingerprint,
+          this.structureToFunctionInfo(s),
+        ]),
+      );
 
       const comparison: CodeStructureComparison = {
         added: [],
@@ -167,7 +201,12 @@ export class CodeAnalysisService {
       await this.findComplexChanges(oldStructures, newStructures, comparison);
 
       // Log the changes
-      await this.logChanges(repositoryId, fromCommitSha, toCommitSha, comparison);
+      await this.logChanges(
+        repositoryId,
+        fromCommitSha,
+        toCommitSha,
+        comparison,
+      );
 
       return comparison;
     } catch (error) {
@@ -176,7 +215,10 @@ export class CodeAnalysisService {
     }
   }
 
-  async getRepositoryStructure(repositoryId: string, commitSha?: string): Promise<{
+  async getRepositoryStructure(
+    repositoryId: string,
+    commitSha?: string,
+  ): Promise<{
     files: Array<{
       filePath: string;
       functions: FunctionInfo[];
@@ -194,46 +236,56 @@ export class CodeAnalysisService {
     const targetCommitSha = commitSha || repository.lastCommitSha;
 
     const structures = await this.codeStructureRepository.find({
-      where: { repositoryId, commitSha: targetCommitSha }
+      where: { repositoryId, commitSha: targetCommitSha },
     });
 
     // Group by file path
     const fileMap = new Map<string, CodeStructure[]>();
-    structures.forEach(structure => {
+    structures.forEach((structure) => {
       if (!fileMap.has(structure.filePath)) {
         fileMap.set(structure.filePath, []);
       }
       fileMap.get(structure.filePath)!.push(structure);
     });
 
-    const files = Array.from(fileMap.entries()).map(([filePath, structures]) => {
-      const functions = structures
-        .filter(s => !s.className)
-        .map(s => this.structureToFunctionInfo(s));
-      
-      const classes = structures
-        .filter(s => s.className)
-        .map(s => this.structureToClassInfo(s));
+    const files = Array.from(fileMap.entries()).map(
+      ([filePath, structures]) => {
+        const functions = structures
+          .filter((s) => !s.className)
+          .map((s) => this.structureToFunctionInfo(s));
 
-      const avgComplexity = structures.length > 0
-        ? structures.reduce((sum, s) => sum + (s.metadata?.cyclomaticComplexity || 1), 0) / structures.length
-        : 0;
+        const classes = structures
+          .filter((s) => s.className)
+          .map((s) => this.structureToClassInfo(s));
 
-      return {
-        filePath,
-        functions,
-        classes,
-        complexity: { average: avgComplexity },
-      };
-    });
+        const avgComplexity =
+          structures.length > 0
+            ? structures.reduce(
+                (sum, s) => sum + (s.metadata?.cyclomaticComplexity || 1),
+                0,
+              ) / structures.length
+            : 0;
+
+        return {
+          filePath,
+          functions,
+          classes,
+          complexity: { average: avgComplexity },
+        };
+      },
+    );
 
     const summary = {
       totalFiles: files.length,
-      totalFunctions: structures.filter(s => !s.className).length,
-      totalClasses: structures.filter(s => s.className).length,
-      averageComplexity: structures.length > 0
-        ? structures.reduce((sum, s) => sum + (s.metadata?.cyclomaticComplexity || 1), 0) / structures.length
-        : 0,
+      totalFunctions: structures.filter((s) => !s.className).length,
+      totalClasses: structures.filter((s) => s.className).length,
+      averageComplexity:
+        structures.length > 0
+          ? structures.reduce(
+              (sum, s) => sum + (s.metadata?.cyclomaticComplexity || 1),
+              0,
+            ) / structures.length
+          : 0,
     };
 
     return { files, summary };
@@ -242,7 +294,7 @@ export class CodeAnalysisService {
   async findFunction(
     repositoryId: string,
     functionName: string,
-    className?: string
+    className?: string,
   ): Promise<CodeStructure[]> {
     const where: any = { repositoryId, functionName, active: true };
     if (className) {
@@ -254,7 +306,7 @@ export class CodeAnalysisService {
 
   async getFunctionHistory(
     repositoryId: string,
-    functionFingerprint: string
+    functionFingerprint: string,
   ): Promise<CodeChangeLog[]> {
     return this.codeChangeLogRepository.find({
       where: { repositoryId },
@@ -266,7 +318,7 @@ export class CodeAnalysisService {
   private async parseFile(
     filePath: string,
     sourceCode: string,
-    language: string
+    language: string,
   ): Promise<CodeAnalysisResult> {
     const config: Partial<ParserConfig> = {
       language: language as any,
@@ -286,7 +338,7 @@ export class CodeAnalysisService {
   private async storeCodeStructures(
     repositoryId: string,
     analysisResult: CodeAnalysisResult,
-    commitSha: string
+    commitSha: string,
   ): Promise<void> {
     // Remove old structures for this file and commit
     await this.codeStructureRepository.delete({
@@ -298,7 +350,7 @@ export class CodeAnalysisService {
     const structures: Partial<CodeStructure>[] = [];
 
     // Add functions
-    analysisResult.functions.forEach(func => {
+    analysisResult.functions.forEach((func) => {
       structures.push({
         repositoryId,
         filePath: analysisResult.filePath,
@@ -329,8 +381,8 @@ export class CodeAnalysisService {
     });
 
     // Add class methods
-    analysisResult.classes.forEach(cls => {
-      cls.methods.forEach(method => {
+    analysisResult.classes.forEach((cls) => {
+      cls.methods.forEach((method) => {
         structures.push({
           repositoryId,
           filePath: analysisResult.filePath,
@@ -369,7 +421,7 @@ export class CodeAnalysisService {
   private async findComplexChanges(
     oldStructures: CodeStructure[],
     newStructures: CodeStructure[],
-    comparison: CodeStructureComparison
+    comparison: CodeStructureComparison,
   ): Promise<void> {
     // This is a simplified implementation
     // A more sophisticated version would use fuzzy matching
@@ -380,12 +432,12 @@ export class CodeAnalysisService {
     repositoryId: string,
     fromCommitSha: string,
     toCommitSha: string,
-    comparison: CodeStructureComparison
+    comparison: CodeStructureComparison,
   ): Promise<void> {
     const changeLogs: Partial<CodeChangeLog>[] = [];
 
     // Log added functions
-    comparison.added.forEach(func => {
+    comparison.added.forEach((func) => {
       changeLogs.push({
         repositoryId,
         fromCommitSha,
@@ -403,7 +455,7 @@ export class CodeAnalysisService {
     });
 
     // Log deleted functions
-    comparison.deleted.forEach(func => {
+    comparison.deleted.forEach((func) => {
       changeLogs.push({
         repositoryId,
         fromCommitSha,
@@ -434,7 +486,7 @@ export class CodeAnalysisService {
       endLine: structure.endLine,
       className: structure.className,
       docstring: structure.docstring,
-      parameters: (structure.astData?.parameters || []).map(p => ({
+      parameters: (structure.astData?.parameters || []).map((p) => ({
         name: p.name,
         type: p.type,
         defaultValue: p.defaultValue,
@@ -484,13 +536,24 @@ export class CodeAnalysisService {
   }
 
   private isAnalyzableFile(fileName: string): boolean {
-    const analyzableExtensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.cpp', '.c', '.go', '.rs'];
-    return analyzableExtensions.some(ext => fileName.endsWith(ext));
+    const analyzableExtensions = [
+      '.ts',
+      '.tsx',
+      '.js',
+      '.jsx',
+      '.py',
+      '.java',
+      '.cpp',
+      '.c',
+      '.go',
+      '.rs',
+    ];
+    return analyzableExtensions.some((ext) => fileName.endsWith(ext));
   }
 
   private detectLanguage(filePath: string): string {
     const extension = filePath.split('.').pop()?.toLowerCase();
-    
+
     switch (extension) {
       case 'ts':
       case 'tsx':
@@ -516,4 +579,4 @@ export class CodeAnalysisService {
         return 'unknown';
     }
   }
-} 
+}

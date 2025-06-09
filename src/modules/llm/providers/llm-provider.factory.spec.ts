@@ -104,7 +104,9 @@ describe('LLMProviderFactory', () => {
         return undefined;
       });
 
-      expect(() => factory.createProvider()).toThrow('Invalid LLM provider type: unsupported');
+      expect(() => factory.createProvider()).toThrow(
+        'Invalid LLM provider type: unsupported',
+      );
     });
 
     it('should parse string numbers correctly', () => {
@@ -125,7 +127,7 @@ describe('LLMProviderFactory', () => {
 
       const provider = factory.createProvider();
       expect(provider).toBeInstanceOf(OllamaProvider);
-      
+
       // Access the config through the provider (we'd need to expose it for testing)
       // For now, we'll trust the parsing worked if no error was thrown
     });
@@ -172,4 +174,4 @@ describe('LLMProviderFactory', () => {
       // Should use defaults without throwing error
     });
   });
-}); 
+});

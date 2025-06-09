@@ -117,13 +117,17 @@ describe('CodeStructure Entity', () => {
 
     describe('location', () => {
       it('should return filePath:startLine-endLine format', () => {
-        expect(codeStructure.location).toBe('src/services/user.service.ts:25-35');
+        expect(codeStructure.location).toBe(
+          'src/services/user.service.ts:25-35',
+        );
       });
 
       it('should handle single line functions', () => {
         codeStructure.startLine = 42;
         codeStructure.endLine = 42;
-        expect(codeStructure.location).toBe('src/services/user.service.ts:42-42');
+        expect(codeStructure.location).toBe(
+          'src/services/user.service.ts:42-42',
+        );
       });
     });
   });
@@ -133,7 +137,7 @@ describe('CodeStructure Entity', () => {
       const newStructure = new CodeStructure();
       newStructure.active = true;
       expect(newStructure.active).toBe(true);
-      
+
       newStructure.active = false;
       expect(newStructure.active).toBe(false);
     });
@@ -144,7 +148,9 @@ describe('CodeStructure Entity', () => {
       expect(typeof codeStructure.startLine).toBe('number');
       expect(typeof codeStructure.endLine).toBe('number');
       expect(codeStructure.startLine).toBeGreaterThan(0);
-      expect(codeStructure.endLine).toBeGreaterThanOrEqual(codeStructure.startLine);
+      expect(codeStructure.endLine).toBeGreaterThanOrEqual(
+        codeStructure.startLine,
+      );
     });
 
     it('should handle boolean properties correctly', () => {
@@ -206,7 +212,9 @@ describe('CodeStructure Entity', () => {
       expect(codeStructure.astData.decorators).toHaveLength(2);
       expect(codeStructure.astData.modifiers).toHaveLength(3);
       expect(codeStructure.astData.dependencies).toHaveLength(4);
-      expect((codeStructure.astData as any).customProperty).toBe('custom value');
+      expect((codeStructure.astData as any).customProperty).toBe(
+        'custom value',
+      );
     });
 
     it('should handle complex nested metadata', () => {
@@ -228,4 +236,4 @@ describe('CodeStructure Entity', () => {
       expect((codeStructure.metadata as any).nestedData.score).toBe(95);
     });
   });
-}); 
+});

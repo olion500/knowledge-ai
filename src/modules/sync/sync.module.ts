@@ -25,4 +25,4 @@ import { CodeAnalysisLLMService } from '../code-analysis/services/code-analysis-
   providers: [SyncService, CodeAnalysisLLMService],
   exports: [SyncService, CodeAnalysisLLMService],
 })
-export class SyncModule {} 
+export class SyncModule {}

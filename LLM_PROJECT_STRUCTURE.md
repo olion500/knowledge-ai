@@ -20,6 +20,7 @@ src/
 │   ├── llm/                # LLM processing (OpenAI/Ollama)
 │   ├── github/             # GitHub API & PR creation
 │   ├── document/           # Document orchestration
+│   ├── code-tracking/      # Code tracking & linking (Phase 1)
 │   └── database/           # Database operations
 ├── common/                 # Shared components
 │   ├── entities/           # TypeORM entities
@@ -68,6 +69,34 @@ src/
 - lastSyncedAt: timestamp
 ```
 
+**CodeReference Entity** (`src/common/entities/code-reference.entity.ts`)
+```typescript
+- id: UUID (PK)
+- repositoryOwner: string
+- repositoryName: string
+- filePath: string
+- referenceType: 'line' | 'range' | 'function'
+- startLine?: number
+- endLine?: number
+- functionName?: string
+- content: text
+- contentHash: string
+- lastFetchedAt: timestamp
+- isActive: boolean
+```
+
+**DocumentCodeLink Entity** (`src/common/entities/document-code-link.entity.ts`)
+```typescript
+- id: UUID (PK)
+- documentId: UUID (FK)
+- codeReferenceId: UUID (FK)
+- placeholderText: string
+- context?: string
+- isActive: boolean
+- createdAt: timestamp
+- updatedAt: timestamp
+```
+
 ### Key Interfaces
 
 **LLM Interfaces** (`src/common/interfaces/llm.interface.ts`)
@@ -75,6 +104,14 @@ src/
 - `SummaryResponse`: Extracted summary, key points, decisions, action items
 - `ClassificationResponse`: Topic classification with confidence
 - `DocumentGenerationRequest/Response`: Document creation payload
+
+**Code Reference Interfaces** (`src/common/interfaces/code-reference.interface.ts`)
+- `CodeLinkInfo`: Parsed GitHub link information
+- `CodeReferenceValidation`: Code reference validation structure
+- `LineBasedCodeResult`: Line-based code extraction result
+- `FunctionBasedCodeResult`: Function-based code extraction result
+- `ReferenceType`: Code reference type union ('line' | 'range' | 'function')
+- `GitHubInfo`: GitHub repository and file information
 
 ## 🔧 Module Details
 
@@ -115,6 +152,16 @@ src/
 **Key Components**:
 - `DocumentService`: Main orchestrator
 - **Process**: Message → LLM → Document → GitHub PR
+
+### 6. Code Tracking Module (`src/modules/code-tracking/`) - Phase 1
+**Purpose**: Parse GitHub links and embed code snippets in documents
+**Key Components**:
+- `CodeTrackingController`: REST API endpoints for code tracking
+- `CodeTrackingService`: Main orchestrator for code tracking pipeline
+- `CodeParserService`: Parse GitHub links from document content
+- `CodeExtractorService`: Extract code from GitHub repositories
+- **Input**: Documents with GitHub links (`github://owner/repo/file.ts:line` format)
+- **Output**: Documents with embedded code snippets and tracking metadata
 
 ## 🔄 Processing Pipeline
 
@@ -202,6 +249,13 @@ const TOPICS = [
 **Manual Operations**:
 - `POST /slack/collect` - Manual message collection
 - `GET /health` - Health check
+
+**Code Tracking APIs** (Phase 1):
+- `POST /code-tracking/process-document` - Process GitHub links in documents
+- `POST /code-tracking/update-document-snippets` - Replace links with code snippets  
+- `GET /code-tracking/document/:id/references` - Get document's code references
+- `GET /code-tracking/references/active` - Get all active code references
+- `POST /code-tracking/references/:id/deactivate` - Deactivate code reference
 
 ## 🔍 Key Files for New Features
 
@@ -347,4 +401,40 @@ pnpm run validate
 pnpm lint && pnpm format && pnpm build && pnpm test && pnpm test:e2e:full
 ```
 
-Following this checklist ensures code quality and project consistency are maintained. 
+Following this checklist ensures code quality and project consistency are maintained.
+
+## 🎯 Code Tracking Feature (Phase 1) - Completed
+
+### Supported GitHub Link Formats
+
+The system now automatically recognizes and processes these GitHub link formats in documents:
+
+```markdown
+[코드 예시](github://owner/repo/src/file.ts:15)           # Single line
+[코드 범위](github://owner/repo/src/file.ts:15-20)        # Line range  
+[함수 설명](github://owner/repo/src/file.ts#functionName)  # Function
+[클래스 메서드](github://owner/repo/src/file.ts#Class.method) # Class method
+```
+
+### Phase 1 Implementation Status
+
+✅ **Completed Components**:
+- `CodeReference` and `DocumentCodeLink` entities with full validation
+- `CodeParserService` for parsing various GitHub link formats
+- `CodeExtractorService` for extracting code via GitHub API
+- `CodeTrackingService` for orchestrating the pipeline
+- `CodeTrackingController` with REST API endpoints
+- Comprehensive test coverage (52 tests across 5 test suites)
+- Integration with existing NestJS application
+
+✅ **Key Features**:
+- Automatic GitHub link detection and parsing
+- Line number and function name-based code extraction
+- Code snippet caching with hash verification
+- Document update with embedded code snippets
+- Error handling for missing files/functions
+- Content change detection through hashing
+
+### Future Development
+
+For detailed development plans and upcoming features, see **[LLM_ROADMAP.md](LLM_ROADMAP.md)**.

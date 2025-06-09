@@ -7,4 +7,4 @@ import { GitHubController } from './github.controller';
   controllers: [GitHubController],
   exports: [GitHubService],
 })
-export class GitHubModule {} 
+export class GitHubModule {}

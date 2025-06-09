@@ -9,4 +9,4 @@ import { DocumentModule } from '../document/document.module';
   providers: [JiraService],
   exports: [JiraService],
 })
-export class JiraModule {} 
+export class JiraModule {}

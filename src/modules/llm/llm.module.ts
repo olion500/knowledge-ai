@@ -6,4 +6,4 @@ import { LLMProviderFactory } from './providers/llm-provider.factory';
   providers: [LLMService, LLMProviderFactory],
   exports: [LLMService],
 })
-export class LLMModule {} 
+export class LLMModule {}

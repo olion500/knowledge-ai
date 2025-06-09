@@ -20,19 +20,26 @@ export class OllamaProvider implements LLMProvider {
     });
   }
 
-  async createCompletion(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
+  async createCompletion(
+    request: LLMCompletionRequest,
+  ): Promise<LLMCompletionResponse> {
     try {
       // Convert messages to a single prompt for Ollama
       const prompt = this.convertMessagesToPrompt(request.messages);
-      
+
       // For JSON responses, we need to instruct the model explicitly
-      const finalPrompt = request.responseFormat?.type === 'json_object' 
-        ? `${prompt}\n\nPlease respond with valid JSON only.`
-        : prompt;
+      const finalPrompt =
+        request.responseFormat?.type === 'json_object'
+          ? `${prompt}\n\nPlease respond with valid JSON only.`
+          : prompt;
 
       // Ensure temperature is a proper number (float32)
-      const temperature = Number(request.temperature ?? this.config.temperature ?? 0.3);
-      const maxTokens = Number(request.maxTokens || this.config.maxTokens || 4000);
+      const temperature = Number(
+        request.temperature ?? this.config.temperature ?? 0.3,
+      );
+      const maxTokens = Number(
+        request.maxTokens || this.config.maxTokens || 4000,
+      );
 
       const response = await this.ollama.generate({
         model: this.config.model,
@@ -55,7 +62,8 @@ export class OllamaProvider implements LLMProvider {
         usage: {
           promptTokens: response.prompt_eval_count || 0,
           completionTokens: response.eval_count || 0,
-          totalTokens: (response.prompt_eval_count || 0) + (response.eval_count || 0),
+          totalTokens:
+            (response.prompt_eval_count || 0) + (response.eval_count || 0),
         },
         finishReason: response.done ? 'stop' : 'length',
       };
@@ -72,16 +80,20 @@ export class OllamaProvider implements LLMProvider {
   async isAvailable(): Promise<boolean> {
     try {
       const models = await this.ollama.list();
-      return models.models.some(model => model.name.includes(this.config.model));
+      return models.models.some((model) =>
+        model.name.includes(this.config.model),
+      );
     } catch (error) {
       this.logger.warn('Ollama availability check failed', error);
       return false;
     }
   }
 
-  private convertMessagesToPrompt(messages: Array<{ role: string; content: string }>): string {
+  private convertMessagesToPrompt(
+    messages: Array<{ role: string; content: string }>,
+  ): string {
     return messages
-      .map(message => {
+      .map((message) => {
         switch (message.role) {
           case 'system':
             return `System: ${message.content}`;
@@ -111,4 +123,4 @@ export class OllamaProvider implements LLMProvider {
     }
     return response;
   }
-} 
+}

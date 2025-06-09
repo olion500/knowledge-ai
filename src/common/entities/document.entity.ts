@@ -38,6 +38,6 @@ export class Document extends BaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   lastSyncedAt: Date;
 
-  @OneToMany(() => Message, message => message.document)
+  @OneToMany(() => Message, (message) => message.document)
   messages: Message[];
-} 
+}

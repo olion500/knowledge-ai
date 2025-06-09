@@ -41,7 +41,9 @@ describe('TypeScriptParser', () => {
       expect(result.functions[0].signature).toContain('greet');
       expect(result.functions[0].fingerprint).toBeDefined();
       expect(result.functions[0].startLine).toBeGreaterThan(0);
-      expect(result.functions[0].endLine).toBeGreaterThan(result.functions[0].startLine);
+      expect(result.functions[0].endLine).toBeGreaterThan(
+        result.functions[0].startLine,
+      );
     });
 
     it('should analyze async functions', async () => {
@@ -146,8 +148,8 @@ describe('TypeScriptParser', () => {
       const result = await parser.analyzeFile('test.ts', sourceCode);
 
       expect(result.classes).toHaveLength(2);
-      
-      const dogClass = result.classes.find(c => c.name === 'Dog');
+
+      const dogClass = result.classes.find((c) => c.name === 'Dog');
       expect(dogClass).toBeDefined();
       expect(dogClass?.superClass).toBe('Animal');
       expect(dogClass?.methods.length).toBeGreaterThanOrEqual(1); // bark method and possibly constructor
@@ -173,8 +175,10 @@ describe('TypeScriptParser', () => {
       expect(result.classes).toHaveLength(1);
       // Note: Current parser implementation may not extract decorator names accurately
       expect(result.classes[0].decorators.length).toBeGreaterThanOrEqual(2);
-      
-      const method = result.classes[0].methods.find(m => m.name === 'getData');
+
+      const method = result.classes[0].methods.find(
+        (m) => m.name === 'getData',
+      );
       if (method) {
         expect(method.decorators).toBeDefined();
       }
@@ -195,18 +199,22 @@ describe('TypeScriptParser', () => {
       const result = await parser.analyzeFile('test.ts', sourceCode);
 
       expect(result.imports).toHaveLength(4);
-      
-      const nestjsImport = result.imports.find(i => i.source === '@nestjs/common');
+
+      const nestjsImport = result.imports.find(
+        (i) => i.source === '@nestjs/common',
+      );
       expect(nestjsImport?.specifiers).toHaveLength(2);
       expect(nestjsImport?.specifiers[0].name).toBe('Injectable');
-      
-      const fsImport = result.imports.find(i => i.source === 'fs');
+
+      const fsImport = result.imports.find((i) => i.source === 'fs');
       expect(fsImport?.specifiers[0].isNamespace).toBe(true);
-      
-      const expressImport = result.imports.find(i => i.source === 'express');
+
+      const expressImport = result.imports.find((i) => i.source === 'express');
       expect(expressImport?.specifiers[0].isDefault).toBe(true);
-      
-      const typeImport = result.imports.find(i => i.source === 'express' && i.isTypeOnly);
+
+      const typeImport = result.imports.find(
+        (i) => i.source === 'express' && i.isTypeOnly,
+      );
       expect(typeImport?.isTypeOnly).toBe(true);
     });
 
@@ -225,8 +233,8 @@ describe('TypeScriptParser', () => {
       const result = await parser.analyzeFile('test.ts', sourceCode);
 
       expect(result.exports.length).toBeGreaterThan(0);
-      
-      const defaultExport = result.exports.find(e => e.isDefault);
+
+      const defaultExport = result.exports.find((e) => e.isDefault);
       expect(defaultExport).toBeDefined();
       expect(defaultExport?.name).toBe('default');
     });
@@ -253,9 +261,13 @@ describe('TypeScriptParser', () => {
 
       expect(result.functions).toHaveLength(1);
       // Note: Current parser implementation has simplified complexity calculation
-      expect(result.functions[0].complexity.cyclomaticComplexity).toBeGreaterThanOrEqual(1);
+      expect(
+        result.functions[0].complexity.cyclomaticComplexity,
+      ).toBeGreaterThanOrEqual(1);
       expect(result.functions[0].complexity.linesOfCode).toBeGreaterThan(1);
-      expect(result.functions[0].complexity.maintainabilityIndex).toBeGreaterThan(0);
+      expect(
+        result.functions[0].complexity.maintainabilityIndex,
+      ).toBeGreaterThan(0);
     });
 
     it('should calculate file-level complexity', async () => {
@@ -300,7 +312,9 @@ describe('TypeScriptParser', () => {
       const result1 = await parser.analyzeFile('test1.ts', sourceCode1);
       const result2 = await parser.analyzeFile('test2.ts', sourceCode2);
 
-      expect(result1.functions[0].fingerprint).toBe(result2.functions[0].fingerprint);
+      expect(result1.functions[0].fingerprint).toBe(
+        result2.functions[0].fingerprint,
+      );
     });
 
     it('should generate different fingerprints for different functions', async () => {
@@ -317,7 +331,9 @@ describe('TypeScriptParser', () => {
       const result = await parser.analyzeFile('test.ts', sourceCode);
 
       expect(result.functions).toHaveLength(2);
-      expect(result.functions[0].fingerprint).not.toBe(result.functions[1].fingerprint);
+      expect(result.functions[0].fingerprint).not.toBe(
+        result.functions[1].fingerprint,
+      );
     });
 
     it('should handle parameter type changes in fingerprints', async () => {
@@ -332,7 +348,9 @@ describe('TypeScriptParser', () => {
       const result1 = await parser.analyzeFile('test1.ts', sourceCode1);
       const result2 = await parser.analyzeFile('test2.ts', sourceCode2);
 
-      expect(result1.functions[0].fingerprint).not.toBe(result2.functions[0].fingerprint);
+      expect(result1.functions[0].fingerprint).not.toBe(
+        result2.functions[0].fingerprint,
+      );
     });
   });
 
@@ -344,7 +362,9 @@ describe('TypeScriptParser', () => {
         }
       `;
 
-      await expect(parser.analyzeFile('invalid.ts', sourceCode)).rejects.toThrow();
+      await expect(
+        parser.analyzeFile('invalid.ts', sourceCode),
+      ).rejects.toThrow();
     });
 
     it('should handle empty files', async () => {
@@ -474,8 +494,16 @@ describe('TypeScriptParser', () => {
       const configWithComments = { includeComments: true };
       const configWithoutComments = { includeComments: false };
 
-      const resultWithComments = await parser.analyzeFile('test.ts', sourceCode, configWithComments);
-      const resultWithoutComments = await parser.analyzeFile('test.ts', sourceCode, configWithoutComments);
+      const resultWithComments = await parser.analyzeFile(
+        'test.ts',
+        sourceCode,
+        configWithComments,
+      );
+      const resultWithoutComments = await parser.analyzeFile(
+        'test.ts',
+        sourceCode,
+        configWithoutComments,
+      );
 
       expect(resultWithComments.functions).toHaveLength(1);
       expect(resultWithoutComments.functions).toHaveLength(1);
@@ -489,11 +517,19 @@ describe('TypeScriptParser', () => {
       const jsConfig = { language: 'javascript' as const };
       const tsConfig = { language: 'typescript' as const };
 
-      const jsResult = await parser.analyzeFile('test.js', sourceCode, jsConfig);
-      const tsResult = await parser.analyzeFile('test.ts', sourceCode, tsConfig);
+      const jsResult = await parser.analyzeFile(
+        'test.js',
+        sourceCode,
+        jsConfig,
+      );
+      const tsResult = await parser.analyzeFile(
+        'test.ts',
+        sourceCode,
+        tsConfig,
+      );
 
       expect(jsResult.language).toBe('javascript');
       expect(tsResult.language).toBe('typescript');
     });
   });
-}); 
+});

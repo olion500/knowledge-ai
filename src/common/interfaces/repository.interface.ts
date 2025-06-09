@@ -93,4 +93,4 @@ export interface GitHubCommitInfo {
     deletions: number;
     total: number;
   };
-} 
+}

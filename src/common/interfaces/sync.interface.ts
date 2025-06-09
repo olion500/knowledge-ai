@@ -80,10 +80,15 @@ export interface CommitInfo {
 
 export interface SyncProgress {
   jobId: string;
-  stage: 'initializing' | 'fetching_commits' | 'analyzing_files' | 'saving_results' | 'completed';
+  stage:
+    | 'initializing'
+    | 'fetching_commits'
+    | 'analyzing_files'
+    | 'saving_results'
+    | 'completed';
   progress: number; // 0-100
   currentFile?: string;
   processedFiles: number;
   totalFiles: number;
   message?: string;
-} 
+}

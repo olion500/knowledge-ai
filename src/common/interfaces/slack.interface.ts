@@ -63,4 +63,4 @@ export interface SlackEventPayload {
   type: string;
   eventId: string;
   eventTime: number;
-} 
+}

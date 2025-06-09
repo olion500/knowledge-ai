@@ -25,4 +25,4 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
     retryAttempts: 3,
     retryDelay: 3000,
   };
-}; 
+};

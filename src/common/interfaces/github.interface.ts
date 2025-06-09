@@ -65,4 +65,4 @@ export interface GitHubCreateFileRequest {
 
 export interface GitHubUpdateFileRequest extends GitHubCreateFileRequest {
   sha: string;
-} 
+}

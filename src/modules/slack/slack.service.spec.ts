@@ -30,4 +30,4 @@ describe('SlackService', () => {
   it('should initialize with slack token from config', () => {
     expect(configService.get).toHaveBeenCalledWith('SLACK_BOT_TOKEN');
   });
-}); 
+});

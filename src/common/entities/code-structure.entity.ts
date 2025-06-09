@@ -78,10 +78,12 @@ export class CodeStructure extends BaseEntity {
   }
 
   get qualifiedName(): string {
-    return this.className ? `${this.className}.${this.functionName}` : this.functionName;
+    return this.className
+      ? `${this.className}.${this.functionName}`
+      : this.functionName;
   }
 
   get location(): string {
     return `${this.filePath}:${this.startLine}-${this.endLine}`;
   }
-} 
+}

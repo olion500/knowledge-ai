@@ -41,7 +41,9 @@ export class Message extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   documentId: string;
 
-  @ManyToOne(() => Document, document => document.messages, { nullable: true })
+  @ManyToOne(() => Document, (document) => document.messages, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'documentId' })
   document: Document;
-} 
+}

@@ -104,29 +104,33 @@ export class SyncJob {
     if (this.status === 'failed' || this.status === 'cancelled') {
       return 0;
     }
-    
+
     const metadata = this.metadata || {};
     const processed = metadata.filesAnalyzed || 0;
     const total = metadata.totalFiles || 0;
-    
+
     if (total === 0) {
       return this.status === 'running' ? 10 : 0;
     }
-    
+
     return Math.min(Math.floor((processed / total) * 100), 99);
   }
 
   updateStatus(status: SyncJob['status'], error?: string): void {
     this.status = status;
-    
+
     if (status === 'running' && !this.startedAt) {
       this.startedAt = new Date();
     }
-    
-    if (status === 'completed' || status === 'failed' || status === 'cancelled') {
+
+    if (
+      status === 'completed' ||
+      status === 'failed' ||
+      status === 'cancelled'
+    ) {
       this.completedAt = new Date();
     }
-    
+
     if (error) {
       this.error = error;
     }
@@ -134,6 +138,8 @@ export class SyncJob {
 
   incrementRetry(): void {
     this.retryCount += 1;
-    this.nextRetryAt = new Date(Date.now() + Math.pow(2, this.retryCount) * 60000); // Exponential backoff
+    this.nextRetryAt = new Date(
+      Date.now() + Math.pow(2, this.retryCount) * 60000,
+    ); // Exponential backoff
   }
-} 
+}

@@ -45,7 +45,9 @@ describe('DocumentationUpdate Entity', () => {
     documentationUpdate.confidence = 85;
     documentationUpdate.reasoning = 'Significant API changes detected';
     // Create a deep copy of mockAnalysisResult to prevent mutations
-    documentationUpdate.analysisResult = JSON.parse(JSON.stringify(mockAnalysisResult));
+    documentationUpdate.analysisResult = JSON.parse(
+      JSON.stringify(mockAnalysisResult),
+    );
     documentationUpdate.changeContext = {
       commits: {
         from: 'abc123',
@@ -74,7 +76,9 @@ describe('DocumentationUpdate Entity', () => {
       expect(documentationUpdate.priority).toBe('medium');
       expect(documentationUpdate.updateType).toBe('multiple');
       expect(documentationUpdate.confidence).toBe(85);
-      expect(documentationUpdate.reasoning).toBe('Significant API changes detected');
+      expect(documentationUpdate.reasoning).toBe(
+        'Significant API changes detected',
+      );
     });
 
     it('should have proper default values', () => {
@@ -163,14 +167,17 @@ describe('DocumentationUpdate Entity', () => {
 
       it('should return medium for 2 updates or medium priority', () => {
         documentationUpdate.priority = 'medium';
-        documentationUpdate.analysisResult.suggestedUpdates.readme!.shouldUpdate = false;
+        documentationUpdate.analysisResult.suggestedUpdates.readme!.shouldUpdate =
+          false;
         expect(documentationUpdate.estimatedEffort).toBe('medium');
       });
 
       it('should return small for single update with low priority', () => {
         documentationUpdate.priority = 'low';
-        documentationUpdate.analysisResult.suggestedUpdates.readme!.shouldUpdate = false;
-        documentationUpdate.analysisResult.suggestedUpdates.apiDocs!.shouldUpdate = false;
+        documentationUpdate.analysisResult.suggestedUpdates.readme!.shouldUpdate =
+          false;
+        documentationUpdate.analysisResult.suggestedUpdates.apiDocs!.shouldUpdate =
+          false;
         expect(documentationUpdate.estimatedEffort).toBe('small');
       });
     });
@@ -191,8 +198,12 @@ describe('DocumentationUpdate Entity', () => {
 
         expect(documentationUpdate.status).toBe('completed');
         expect(documentationUpdate.completedAt).toBeDefined();
-        expect(documentationUpdate.completedAt!.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime());
-        expect(documentationUpdate.completedAt!.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
+        expect(
+          documentationUpdate.completedAt!.getTime(),
+        ).toBeGreaterThanOrEqual(beforeUpdate.getTime());
+        expect(documentationUpdate.completedAt!.getTime()).toBeLessThanOrEqual(
+          afterUpdate.getTime(),
+        );
       });
 
       it('should update notes when provided', () => {
@@ -230,8 +241,12 @@ describe('DocumentationUpdate Entity', () => {
 
         // Allow for some time variance in test execution
         const actualDueDate = documentationUpdate.dueDate!;
-        expect(actualDueDate.getTime()).toBeGreaterThanOrEqual(expectedDate.getTime() - 1000);
-        expect(actualDueDate.getTime()).toBeLessThanOrEqual(expectedDate.getTime() + 1000);
+        expect(actualDueDate.getTime()).toBeGreaterThanOrEqual(
+          expectedDate.getTime() - 1000,
+        );
+        expect(actualDueDate.getTime()).toBeLessThanOrEqual(
+          expectedDate.getTime() + 1000,
+        );
       });
 
       it('should set due date based on medium priority (3 days)', () => {
@@ -243,7 +258,9 @@ describe('DocumentationUpdate Entity', () => {
         expectedDate.setDate(expectedDate.getDate() + 3);
 
         const actualDate = documentationUpdate.dueDate!;
-        expect(Math.abs(actualDate.getTime() - expectedDate.getTime())).toBeLessThan(2000); // 2 second tolerance
+        expect(
+          Math.abs(actualDate.getTime() - expectedDate.getTime()),
+        ).toBeLessThan(2000); // 2 second tolerance
       });
 
       it('should set due date based on low priority (7 days)', () => {
@@ -255,7 +272,9 @@ describe('DocumentationUpdate Entity', () => {
         expectedDate.setDate(expectedDate.getDate() + 7);
 
         const actualDate = documentationUpdate.dueDate!;
-        expect(Math.abs(actualDate.getTime() - expectedDate.getTime())).toBeLessThan(2000); // 2 second tolerance
+        expect(
+          Math.abs(actualDate.getTime() - expectedDate.getTime()),
+        ).toBeLessThan(2000); // 2 second tolerance
       });
 
       it('should use entity priority when no priority parameter provided', () => {
@@ -263,13 +282,15 @@ describe('DocumentationUpdate Entity', () => {
         documentationUpdate.setDueDate();
 
         expect(documentationUpdate.dueDate).toBeDefined();
-        
+
         const now = new Date();
         const expectedDate = new Date(now);
         expectedDate.setDate(expectedDate.getDate() + 1); // high priority = 1 day
 
         const actualDate = documentationUpdate.dueDate!;
-        expect(Math.abs(actualDate.getTime() - expectedDate.getTime())).toBeLessThan(2000);
+        expect(
+          Math.abs(actualDate.getTime() - expectedDate.getTime()),
+        ).toBeLessThan(2000);
       });
     });
   });
@@ -279,9 +300,10 @@ describe('DocumentationUpdate Entity', () => {
       expect(documentationUpdate.analysisResult).toEqual(mockAnalysisResult);
       expect(documentationUpdate.analysisResult.shouldUpdate).toBe(true);
       expect(documentationUpdate.analysisResult.confidence).toBe(85);
-      
+
       // Check that the readme update should be set correctly
-      const readmeUpdate = documentationUpdate.analysisResult.suggestedUpdates.readme;
+      const readmeUpdate =
+        documentationUpdate.analysisResult.suggestedUpdates.readme;
       expect(readmeUpdate).toBeDefined();
       expect(readmeUpdate!.shouldUpdate).toBe(true);
     });
@@ -320,4 +342,4 @@ describe('DocumentationUpdate Entity', () => {
       expect(documentationUpdate.estimatedEffort).toBe('medium'); // Because priority is 'medium' by default
     });
   });
-}); 
+});

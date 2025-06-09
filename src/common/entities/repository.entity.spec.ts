@@ -25,7 +25,9 @@ describe('Repository Entity', () => {
     });
 
     it('should generate correct API URL', () => {
-      expect(repository.apiUrl).toBe('https://api.github.com/repos/facebook/react');
+      expect(repository.apiUrl).toBe(
+        'https://api.github.com/repos/facebook/react',
+      );
     });
   });
 
@@ -35,7 +37,8 @@ describe('Repository Entity', () => {
       repository.name = 'react';
       repository.fullName = 'facebook/react';
       repository.defaultBranch = 'main';
-      repository.description = 'A declarative, efficient, and flexible JavaScript library for building user interfaces.';
+      repository.description =
+        'A declarative, efficient, and flexible JavaScript library for building user interfaces.';
       repository.language = 'JavaScript';
       repository.isPrivate = false;
       repository.active = true;
@@ -44,7 +47,9 @@ describe('Repository Entity', () => {
       expect(repository.name).toBe('react');
       expect(repository.fullName).toBe('facebook/react');
       expect(repository.defaultBranch).toBe('main');
-      expect(repository.description).toBe('A declarative, efficient, and flexible JavaScript library for building user interfaces.');
+      expect(repository.description).toBe(
+        'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
+      );
       expect(repository.language).toBe('JavaScript');
       expect(repository.isPrivate).toBe(false);
       expect(repository.active).toBe(true);
@@ -127,4 +132,4 @@ describe('Repository Entity', () => {
       expect(repository.metadata?.anotherField).toEqual({ nested: 'data' });
     });
   });
-}); 
+});

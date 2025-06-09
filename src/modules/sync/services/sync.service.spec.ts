@@ -164,10 +164,10 @@ describe('SyncService', () => {
     const mockConfigService = {
       get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
         const config = {
-          'SYNC_ENABLED': true,
-          'SYNC_CRON': '0 6 * * *',
-          'SYNC_RETRY_ATTEMPTS': 3,
-          'SYNC_RETRY_DELAY': 600000,
+          SYNC_ENABLED: true,
+          SYNC_CRON: '0 6 * * *',
+          SYNC_RETRY_ATTEMPTS: 3,
+          SYNC_RETRY_DELAY: 600000,
         };
         return config[key] || defaultValue;
       }),
@@ -222,7 +222,9 @@ describe('SyncService', () => {
     githubService = module.get(GitHubService);
     repositoryRepository = module.get(getRepositoryToken(Repository));
     syncJobRepository = module.get(getRepositoryToken(SyncJob));
-    documentationUpdateRepository = module.get(getRepositoryToken(DocumentationUpdate));
+    documentationUpdateRepository = module.get(
+      getRepositoryToken(DocumentationUpdate),
+    );
     schedulerRegistry = module.get(SchedulerRegistry);
     configService = module.get(ConfigService);
   });
@@ -235,7 +237,9 @@ describe('SyncService', () => {
 
   describe('Sync Repository', () => {
     beforeEach(() => {
-      repositoryRepository.findOne.mockResolvedValue(mockRepository as Repository);
+      repositoryRepository.findOne.mockResolvedValue(
+        mockRepository as Repository,
+      );
       syncJobRepository.create.mockReturnValue(mockSyncJob as SyncJob);
       syncJobRepository.save.mockResolvedValue(mockSyncJob as SyncJob);
       // Reset findOne to return null (no existing running job) first, then return the job
@@ -274,20 +278,26 @@ describe('SyncService', () => {
     it('should handle repository not found', async () => {
       repositoryRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.syncRepository('nonexistent-repo')).rejects.toThrow('Repository nonexistent-repo not found');
+      await expect(service.syncRepository('nonexistent-repo')).rejects.toThrow(
+        'Repository nonexistent-repo not found',
+      );
     });
 
     it('should handle existing running job', async () => {
       syncJobRepository.findOne.mockResolvedValue(mockSyncJob as SyncJob);
 
-      await expect(service.syncRepository('repo-123')).rejects.toThrow('Sync job already running for repository repo-123');
+      await expect(service.syncRepository('repo-123')).rejects.toThrow(
+        'Sync job already running for repository repo-123',
+      );
     });
   });
 
   describe('Sync Job Management', () => {
     describe('createSyncJob', () => {
       it('should create and save sync job', async () => {
-        repositoryRepository.findOne.mockResolvedValue(mockRepository as Repository);
+        repositoryRepository.findOne.mockResolvedValue(
+          mockRepository as Repository,
+        );
         syncJobRepository.findOne.mockResolvedValue(null); // No existing job
         syncJobRepository.create.mockReturnValue(mockSyncJob as SyncJob);
         syncJobRepository.save.mockResolvedValue(mockSyncJob as SyncJob);
@@ -301,7 +311,9 @@ describe('SyncService', () => {
           status: 'pending',
           metadata: {},
         });
-        expect(syncJobRepository.save).toHaveBeenCalledWith(mockSyncJob as SyncJob);
+        expect(syncJobRepository.save).toHaveBeenCalledWith(
+          mockSyncJob as SyncJob,
+        );
       });
     });
 
@@ -388,4 +400,4 @@ describe('SyncService', () => {
       });
     });
   });
-}); 
+});

@@ -66,4 +66,4 @@ export class Repository extends BaseEntity {
   get apiUrl(): string {
     return `https://api.github.com/repos/${this.fullName}`;
   }
-} 
+}

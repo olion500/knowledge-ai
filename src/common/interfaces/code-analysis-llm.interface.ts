@@ -114,8 +114,11 @@ export interface LLMAnalysisConfig {
 }
 
 export interface CodeAnalysisPrompt {
-  type: 'code_change_analysis' | 'documentation_impact' | 'changelog_generation';
+  type:
+    | 'code_change_analysis'
+    | 'documentation_impact'
+    | 'changelog_generation';
   context: CodeChangeContext;
   instruction: string;
   expectedOutput: 'json' | 'markdown' | 'text';
-} 
+}

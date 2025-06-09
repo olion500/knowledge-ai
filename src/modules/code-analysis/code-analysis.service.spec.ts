@@ -37,45 +37,52 @@ describe('CodeAnalysisService', () => {
     url: 'https://api.github.com/repos/test/test/contents/src/test.ts',
     html_url: 'https://github.com/test/test/blob/main/src/test.ts',
     git_url: 'https://api.github.com/repos/test/test/git/blobs/file123',
-    download_url: 'https://raw.githubusercontent.com/test/test/main/src/test.ts',
+    download_url:
+      'https://raw.githubusercontent.com/test/test/main/src/test.ts',
     type: 'file',
-    content: Buffer.from(`
+    content: Buffer.from(
+      `
       function testFunction(param: string): void {
         console.log(param);
       }
-    `).toString('base64'),
+    `,
+    ).toString('base64'),
     encoding: 'base64',
   };
 
   const mockAnalysisResult = {
     filePath: 'src/test.ts',
     language: 'typescript',
-    functions: [{
-      name: 'testFunction',
-      signature: 'testFunction(param: string): void',
-      fingerprint: 'abc123',
-      startLine: 2,
-      endLine: 4,
-      parameters: [{
-        name: 'param',
-        type: 'string',
-        optional: false,
-        spread: false,
-      }],
-      returnType: 'void',
-      decorators: [],
-      modifiers: [],
-      complexity: {
-        cyclomaticComplexity: 1,
-        cognitiveComplexity: 0,
-        linesOfCode: 3,
-        maintainabilityIndex: 100,
+    functions: [
+      {
+        name: 'testFunction',
+        signature: 'testFunction(param: string): void',
+        fingerprint: 'abc123',
+        startLine: 2,
+        endLine: 4,
+        parameters: [
+          {
+            name: 'param',
+            type: 'string',
+            optional: false,
+            spread: false,
+          },
+        ],
+        returnType: 'void',
+        decorators: [],
+        modifiers: [],
+        complexity: {
+          cyclomaticComplexity: 1,
+          cognitiveComplexity: 0,
+          linesOfCode: 3,
+          maintainabilityIndex: 100,
+        },
+        dependencies: [],
+        isAsync: false,
+        isGenerator: false,
+        isExported: false,
       },
-      dependencies: [],
-      isAsync: false,
-      isGenerator: false,
-      isExported: false,
-    }],
+    ],
     classes: [],
     imports: [],
     exports: [],
@@ -189,7 +196,7 @@ describe('CodeAnalysisService', () => {
       expect(githubService.getRepositoryContents).toHaveBeenCalledWith(
         'testowner',
         'testrepo',
-        'commit123'
+        'commit123',
       );
       expect(typescriptParser.analyzeFile).toHaveBeenCalledTimes(2);
     });
@@ -218,7 +225,7 @@ describe('CodeAnalysisService', () => {
       repositoryService.findOne.mockResolvedValue(repoWithoutCommit as any);
 
       await expect(service.analyzeRepository('repo-123')).rejects.toThrow(
-        'No commit SHA available for analysis'
+        'No commit SHA available for analysis',
       );
     });
   });
@@ -231,14 +238,21 @@ describe('CodeAnalysisService', () => {
       codeStructureRepository.delete.mockResolvedValue({} as any);
       codeStructureRepository.save.mockResolvedValue([] as any);
 
-      const result = await service.analyzeFile('repo-123', 'src/test.ts', 'commit123');
+      const result = await service.analyzeFile(
+        'repo-123',
+        'src/test.ts',
+        'commit123',
+      );
 
       expect(result).toEqual(mockAnalysisResult);
-      expect(githubService.getFileContent).toHaveBeenCalledWith('src/test.ts', 'commit123');
+      expect(githubService.getFileContent).toHaveBeenCalledWith(
+        'src/test.ts',
+        'commit123',
+      );
       expect(typescriptParser.analyzeFile).toHaveBeenCalledWith(
         'src/test.ts',
         expect.any(String),
-        expect.objectContaining({ language: 'typescript' })
+        expect.objectContaining({ language: 'typescript' }),
       );
       expect(codeStructureRepository.save).toHaveBeenCalled();
     });
@@ -248,7 +262,7 @@ describe('CodeAnalysisService', () => {
       githubService.getFileContent.mockResolvedValue(null);
 
       await expect(
-        service.analyzeFile('repo-123', 'missing.ts', 'commit123')
+        service.analyzeFile('repo-123', 'missing.ts', 'commit123'),
       ).rejects.toThrow('File missing.ts not found');
     });
 
@@ -257,7 +271,7 @@ describe('CodeAnalysisService', () => {
       githubService.getFileContent.mockResolvedValue({ content: null } as any);
 
       await expect(
-        service.analyzeFile('repo-123', 'empty.ts', 'commit123')
+        service.analyzeFile('repo-123', 'empty.ts', 'commit123'),
       ).rejects.toThrow('File empty.ts not found');
     });
 
@@ -276,22 +290,30 @@ describe('CodeAnalysisService', () => {
       codeStructureRepository.save.mockResolvedValue([] as any);
 
       for (const testCase of testCases) {
-        const mockResult = { ...mockAnalysisResult, language: testCase.expectedLanguage };
-        
-        if (testCase.expectedLanguage === 'typescript' || testCase.expectedLanguage === 'javascript') {
+        const mockResult = {
+          ...mockAnalysisResult,
+          language: testCase.expectedLanguage,
+        };
+
+        if (
+          testCase.expectedLanguage === 'typescript' ||
+          testCase.expectedLanguage === 'javascript'
+        ) {
           typescriptParser.analyzeFile.mockResolvedValue(mockResult as any);
-          
+
           await service.analyzeFile('repo-123', testCase.filePath, 'commit123');
-          
+
           expect(typescriptParser.analyzeFile).toHaveBeenCalledWith(
             testCase.filePath,
             expect.any(String),
-            expect.objectContaining({ language: testCase.expectedLanguage })
+            expect.objectContaining({ language: testCase.expectedLanguage }),
           );
         } else {
           await expect(
-            service.analyzeFile('repo-123', testCase.filePath, 'commit123')
-          ).rejects.toThrow(`Unsupported language: ${testCase.expectedLanguage}`);
+            service.analyzeFile('repo-123', testCase.filePath, 'commit123'),
+          ).rejects.toThrow(
+            `Unsupported language: ${testCase.expectedLanguage}`,
+          );
         }
       }
     });
@@ -330,7 +352,11 @@ describe('CodeAnalysisService', () => {
         .mockResolvedValueOnce(newStructures as any);
       codeChangeLogRepository.save.mockResolvedValue([] as any);
 
-      const result = await service.compareCommits('repo-123', 'oldCommit', 'newCommit');
+      const result = await service.compareCommits(
+        'repo-123',
+        'oldCommit',
+        'newCommit',
+      );
 
       expect(result.added).toHaveLength(1);
       expect(result.deleted).toHaveLength(1);
@@ -339,10 +365,10 @@ describe('CodeAnalysisService', () => {
       expect(result.renamed).toHaveLength(0);
 
       expect(codeStructureRepository.find).toHaveBeenCalledWith({
-        where: { repositoryId: 'repo-123', commitSha: 'oldCommit' }
+        where: { repositoryId: 'repo-123', commitSha: 'oldCommit' },
       });
       expect(codeStructureRepository.find).toHaveBeenCalledWith({
-        where: { repositoryId: 'repo-123', commitSha: 'newCommit' }
+        where: { repositoryId: 'repo-123', commitSha: 'newCommit' },
       });
     });
 
@@ -363,7 +389,11 @@ describe('CodeAnalysisService', () => {
         .mockResolvedValueOnce([sameStructure] as any);
       codeChangeLogRepository.save.mockResolvedValue([] as any);
 
-      const result = await service.compareCommits('repo-123', 'commit1', 'commit2');
+      const result = await service.compareCommits(
+        'repo-123',
+        'commit1',
+        'commit2',
+      );
 
       expect(result.added).toHaveLength(0);
       expect(result.deleted).toHaveLength(0);
@@ -424,7 +454,7 @@ describe('CodeAnalysisService', () => {
       await service.getRepositoryStructure('repo-123', customCommit);
 
       expect(codeStructureRepository.find).toHaveBeenCalledWith({
-        where: { repositoryId: 'repo-123', commitSha: customCommit }
+        where: { repositoryId: 'repo-123', commitSha: customCommit },
       });
     });
   });
@@ -442,7 +472,11 @@ describe('CodeAnalysisService', () => {
 
       expect(result).toEqual(mockStructures);
       expect(codeStructureRepository.find).toHaveBeenCalledWith({
-        where: { repositoryId: 'repo-123', functionName: 'testFunction', active: true }
+        where: {
+          repositoryId: 'repo-123',
+          functionName: 'testFunction',
+          active: true,
+        },
       });
     });
 
@@ -453,16 +487,20 @@ describe('CodeAnalysisService', () => {
 
       codeStructureRepository.find.mockResolvedValue(mockStructures as any);
 
-      const result = await service.findFunction('repo-123', 'testMethod', 'TestClass');
+      const result = await service.findFunction(
+        'repo-123',
+        'testMethod',
+        'TestClass',
+      );
 
       expect(result).toEqual(mockStructures);
       expect(codeStructureRepository.find).toHaveBeenCalledWith({
-        where: { 
-          repositoryId: 'repo-123', 
-          functionName: 'testMethod', 
+        where: {
+          repositoryId: 'repo-123',
+          functionName: 'testMethod',
           className: 'TestClass',
-          active: true
-        }
+          active: true,
+        },
       });
     });
   });
@@ -484,7 +522,10 @@ describe('CodeAnalysisService', () => {
 
       codeChangeLogRepository.find.mockResolvedValue(mockChangeLogs as any);
 
-      const result = await service.getFunctionHistory('repo-123', 'function123');
+      const result = await service.getFunctionHistory(
+        'repo-123',
+        'function123',
+      );
 
       expect(result).toEqual(mockChangeLogs);
       expect(codeChangeLogRepository.find).toHaveBeenCalledWith({
@@ -497,14 +538,18 @@ describe('CodeAnalysisService', () => {
 
   describe('Error Handling', () => {
     it('should handle repository not found', async () => {
-      repositoryService.findOne.mockRejectedValue(new Error('Repository not found'));
+      repositoryService.findOne.mockRejectedValue(
+        new Error('Repository not found'),
+      );
 
       await expect(service.analyzeRepository('invalid-repo')).rejects.toThrow();
     });
 
     it('should handle GitHub API errors', async () => {
       repositoryService.findOne.mockResolvedValue(mockRepository as any);
-      githubService.getRepositoryContents.mockRejectedValue(new Error('GitHub API error'));
+      githubService.getRepositoryContents.mockRejectedValue(
+        new Error('GitHub API error'),
+      );
 
       await expect(service.analyzeRepository('repo-123')).rejects.toThrow();
     });
@@ -515,7 +560,7 @@ describe('CodeAnalysisService', () => {
       typescriptParser.analyzeFile.mockRejectedValue(new Error('Parser error'));
 
       await expect(
-        service.analyzeFile('repo-123', 'test.ts', 'commit123')
+        service.analyzeFile('repo-123', 'test.ts', 'commit123'),
       ).rejects.toThrow();
     });
 
@@ -523,10 +568,12 @@ describe('CodeAnalysisService', () => {
       repositoryService.findOne.mockResolvedValue(mockRepository as any);
       githubService.getFileContent.mockResolvedValue(mockFileContent);
       typescriptParser.analyzeFile.mockResolvedValue(mockAnalysisResult as any);
-      codeStructureRepository.save.mockRejectedValue(new Error('Database error'));
+      codeStructureRepository.save.mockRejectedValue(
+        new Error('Database error'),
+      );
 
       await expect(
-        service.analyzeFile('repo-123', 'test.ts', 'commit123')
+        service.analyzeFile('repo-123', 'test.ts', 'commit123'),
       ).rejects.toThrow();
     });
 
@@ -535,7 +582,7 @@ describe('CodeAnalysisService', () => {
       githubService.getFileContent.mockResolvedValue(mockFileContent);
 
       await expect(
-        service.analyzeFile('repo-123', 'test.py', 'commit123')
+        service.analyzeFile('repo-123', 'test.py', 'commit123'),
       ).rejects.toThrow('Unsupported language: python');
     });
   });
@@ -558,12 +605,17 @@ describe('CodeAnalysisService', () => {
 
       for (const testCase of testCases) {
         const filePath = `test.${testCase.extension}`;
-        
+
         // Call the private method through analyzeFile if it's TypeScript/JavaScript
-        if (testCase.expected === 'typescript' || testCase.expected === 'javascript') {
+        if (
+          testCase.expected === 'typescript' ||
+          testCase.expected === 'javascript'
+        ) {
           repositoryService.findOne.mockResolvedValue(mockRepository as any);
           githubService.getFileContent.mockResolvedValue(mockFileContent);
-          typescriptParser.analyzeFile.mockResolvedValue(mockAnalysisResult as any);
+          typescriptParser.analyzeFile.mockResolvedValue(
+            mockAnalysisResult as any,
+          );
           codeStructureRepository.delete.mockResolvedValue({} as any);
           codeStructureRepository.save.mockResolvedValue([] as any);
 
@@ -600,4 +652,4 @@ describe('CodeAnalysisService', () => {
       expect(result.errors).toHaveLength(1); // py file fails with unsupported language
     });
   });
-}); 
+});

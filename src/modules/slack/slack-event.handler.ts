@@ -7,4 +7,4 @@ export class SlackEventHandler {
     // Basic event handler - can be expanded later
     return {};
   }
-} 
+}

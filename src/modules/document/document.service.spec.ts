@@ -131,8 +131,18 @@ describe('DocumentService', () => {
       // Mock user info responses
       slackService.getUserInfo.mockImplementation((userId: string) => {
         const userMap = {
-          'U1234567890': { id: 'U1234567890', name: 'john.doe', realName: 'John Doe', isBot: false },
-          'U0987654321': { id: 'U0987654321', name: 'jane.smith', realName: 'Jane Smith', isBot: false },
+          U1234567890: {
+            id: 'U1234567890',
+            name: 'john.doe',
+            realName: 'John Doe',
+            isBot: false,
+          },
+          U0987654321: {
+            id: 'U0987654321',
+            name: 'jane.smith',
+            realName: 'Jane Smith',
+            isBot: false,
+          },
         };
         return Promise.resolve(userMap[userId] || null);
       });
@@ -141,7 +151,9 @@ describe('DocumentService', () => {
       llmService.classifyContent.mockResolvedValue(mockClassification);
       llmService.generateDocument.mockResolvedValue(mockDocument);
       githubService.findExistingDocument.mockResolvedValue(null);
-      githubService.generateDocumentPath.mockResolvedValue('docs/product-planning/feature-implementation-decision.md');
+      githubService.generateDocumentPath.mockResolvedValue(
+        'docs/product-planning/feature-implementation-decision.md',
+      );
       githubService.createBranch.mockResolvedValue();
       githubService.createOrUpdateFile.mockResolvedValue('commit-sha-123');
       githubService.createPullRequest.mockResolvedValue({
@@ -152,7 +164,8 @@ describe('DocumentService', () => {
       await service.processSlackMessages(mockMessages);
 
       expect(llmService.summarizeContent).toHaveBeenCalledWith({
-        content: '[John Doe]: We need to decide on the new feature implementation\n[Jane Smith]: I agree, lets go with option A',
+        content:
+          '[John Doe]: We need to decide on the new feature implementation\n[Jane Smith]: I agree, lets go with option A',
         contentType: 'slack',
         context: {
           channel: 'C1234567890',
@@ -162,8 +175,12 @@ describe('DocumentService', () => {
       });
 
       expect(llmService.classifyContent).toHaveBeenCalledWith({
-        content: '[John Doe]: We need to decide on the new feature implementation\n[Jane Smith]: I agree, lets go with option A',
-        availableTopics: expect.arrayContaining(['product-planning', 'technical-architecture']),
+        content:
+          '[John Doe]: We need to decide on the new feature implementation\n[Jane Smith]: I agree, lets go with option A',
+        availableTopics: expect.arrayContaining([
+          'product-planning',
+          'technical-architecture',
+        ]),
         context: {
           source: 'slack',
           metadata: {
@@ -176,7 +193,9 @@ describe('DocumentService', () => {
 
       expect(githubService.createPullRequest).toHaveBeenCalledWith({
         title: '📄 New: Feature Implementation Decision',
-        body: expect.stringContaining('Discussion about new feature implementation'),
+        body: expect.stringContaining(
+          'Discussion about new feature implementation',
+        ),
         head: expect.stringContaining('knowledge-sync/product-planning-'),
         base: 'main',
         reviewers: ['reviewer1', 'reviewer2'],
@@ -253,7 +272,8 @@ describe('DocumentService', () => {
 
       const mockSimilarity = {
         similarityScore: 0.85,
-        reasoning: 'Both documents discuss the same feature with minor differences',
+        reasoning:
+          'Both documents discuss the same feature with minor differences',
         keyDifferences: ['Slight wording changes'],
       };
 
@@ -274,7 +294,12 @@ describe('DocumentService', () => {
       // Mock user info responses
       slackService.getUserInfo.mockImplementation((userId: string) => {
         const userMap = {
-          'U1234567890': { id: 'U1234567890', name: 'john.doe', realName: 'John Doe', isBot: false },
+          U1234567890: {
+            id: 'U1234567890',
+            name: 'john.doe',
+            realName: 'John Doe',
+            isBot: false,
+          },
         };
         return Promise.resolve(userMap[userId] || null);
       });
@@ -293,7 +318,9 @@ describe('DocumentService', () => {
         git_url: 'existing-git-url',
         download_url: 'existing-download-url',
         type: 'file' as const,
-        content: Buffer.from('# Existing Feature Document\n\nThis document already covers the topic...').toString('base64'),
+        content: Buffer.from(
+          '# Existing Feature Document\n\nThis document already covers the topic...',
+        ).toString('base64'),
         encoding: 'base64' as const,
       });
 
@@ -400,7 +427,9 @@ describe('DocumentService', () => {
       llmService.classifyContent.mockResolvedValue(mockClassification);
       llmService.generateDocument.mockResolvedValue(mockDocument);
       githubService.findExistingDocument.mockResolvedValue(null);
-      githubService.generateDocumentPath.mockResolvedValue('docs/bug-reports/authentication-bug-report.md');
+      githubService.generateDocumentPath.mockResolvedValue(
+        'docs/bug-reports/authentication-bug-report.md',
+      );
       githubService.createBranch.mockResolvedValue();
       githubService.createOrUpdateFile.mockResolvedValue('commit-sha-123');
       githubService.createPullRequest.mockResolvedValue({
@@ -448,13 +477,16 @@ describe('DocumentService', () => {
       // Mock user info responses
       slackService.getUserInfo.mockImplementation((userId: string) => {
         const userMap = {
-          'U1': { id: 'U1', name: 'user1', realName: 'User One', isBot: false },
-          'U2': { id: 'U2', name: 'user2', realName: 'User Two', isBot: false },
+          U1: { id: 'U1', name: 'user1', realName: 'User One', isBot: false },
+          U2: { id: 'U2', name: 'user2', realName: 'User Two', isBot: false },
         };
         return Promise.resolve(userMap[userId] || null);
       });
 
-      const result = await (service as any).prepareContentForLLM(mockMessages, 'slack');
+      const result = await (service as any).prepareContentForLLM(
+        mockMessages,
+        'slack',
+      );
 
       expect(result).toBe('[User One]: Hello\n[User Two]: World');
     });
@@ -508,7 +540,10 @@ describe('DocumentService', () => {
         ],
       };
 
-      const result = await (service as any).prepareContentForLLM([mockIssue], 'jira');
+      const result = await (service as any).prepareContentForLLM(
+        [mockIssue],
+        'jira',
+      );
 
       expect(result).toContain('Title: Test Issue');
       expect(result).toContain('Description: Test Description');
@@ -589,4 +624,4 @@ describe('DocumentService', () => {
       expect(result).toContain('Added new information');
     });
   });
-}); 
+});

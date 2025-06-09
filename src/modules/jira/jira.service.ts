@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JiraIssue, JiraWebhookEvent } from '../../common/interfaces/jira.interface';
+import {
+  JiraIssue,
+  JiraWebhookEvent,
+} from '../../common/interfaces/jira.interface';
 import { DocumentService } from '../document/document.service';
 
 @Injectable()
@@ -28,7 +31,9 @@ export class JiraService {
         if (this.shouldProcessIssue(event.issue)) {
           await this.processIssueForDocumentation(event.issue);
         } else {
-          this.logger.debug(`Skipping issue ${event.issue.key} - does not meet processing criteria`);
+          this.logger.debug(
+            `Skipping issue ${event.issue.key} - does not meet processing criteria`,
+          );
         }
       } else {
         this.logger.debug(`Ignoring non-issue event: ${event.webhookEvent}`);
@@ -72,10 +77,10 @@ export class JiraService {
       'critical',
     ];
 
-    const hasImportantLabel = issue.labels.some(label =>
-      importantLabels.some(important => 
-        label.toLowerCase().includes(important.toLowerCase())
-      )
+    const hasImportantLabel = issue.labels.some((label) =>
+      importantLabels.some((important) =>
+        label.toLowerCase().includes(important.toLowerCase()),
+      ),
     );
 
     if (hasImportantLabel) {
@@ -118,7 +123,7 @@ export class JiraService {
     }
 
     if (issue.components.length > 0) {
-      content += `\nComponents: ${issue.components.map(c => c.name).join(', ')}\n`;
+      content += `\nComponents: ${issue.components.map((c) => c.name).join(', ')}\n`;
     }
 
     if (issue.labels.length > 0) {
@@ -127,7 +132,7 @@ export class JiraService {
 
     if (issue.comments.length > 0) {
       content += '\nComments:\n';
-      issue.comments.forEach(comment => {
+      issue.comments.forEach((comment) => {
         content += `[${comment.author.displayName}]: ${comment.body}\n`;
       });
     }
@@ -146,4 +151,4 @@ export class JiraService {
       return null;
     }
   }
-} 
+}

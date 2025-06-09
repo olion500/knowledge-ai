@@ -21,7 +21,9 @@ export class OpenAIProvider implements LLMProvider {
     });
   }
 
-  async createCompletion(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
+  async createCompletion(
+    request: LLMCompletionRequest,
+  ): Promise<LLMCompletionResponse> {
     try {
       const completion = await this.openai.chat.completions.create({
         model: this.config.model,
@@ -38,11 +40,13 @@ export class OpenAIProvider implements LLMProvider {
 
       return {
         content: choice.message.content,
-        usage: completion.usage ? {
-          promptTokens: completion.usage.prompt_tokens,
-          completionTokens: completion.usage.completion_tokens,
-          totalTokens: completion.usage.total_tokens,
-        } : undefined,
+        usage: completion.usage
+          ? {
+              promptTokens: completion.usage.prompt_tokens,
+              completionTokens: completion.usage.completion_tokens,
+              totalTokens: completion.usage.total_tokens,
+            }
+          : undefined,
         finishReason: choice.finish_reason || undefined,
       };
     } catch (error) {
@@ -58,10 +62,10 @@ export class OpenAIProvider implements LLMProvider {
   async isAvailable(): Promise<boolean> {
     try {
       const models = await this.openai.models.list();
-      return models.data.some(model => model.id === this.config.model);
+      return models.data.some((model) => model.id === this.config.model);
     } catch (error) {
       this.logger.warn('OpenAI availability check failed', error);
       return false;
     }
   }
-} 
+}

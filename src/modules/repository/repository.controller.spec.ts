@@ -18,7 +18,8 @@ describe('RepositoryController', () => {
     name: 'react',
     fullName: 'facebook/react',
     defaultBranch: 'main',
-    description: 'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
+    description:
+      'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
     language: 'JavaScript',
     lastCommitSha: 'abc123',
     lastSyncedAt: new Date('2024-01-01T00:00:00Z'),
@@ -89,10 +90,12 @@ describe('RepositoryController', () => {
 
     it('should pass validation errors through', async () => {
       const invalidDto = { owner: '', name: '' } as CreateRepositoryDto;
-      
+
       // This would normally be caught by ValidationPipe before reaching the controller
       // but we test that the controller properly calls the service
-      repositoryService.create.mockRejectedValue(new Error('Validation failed'));
+      repositoryService.create.mockRejectedValue(
+        new Error('Validation failed'),
+      );
 
       await expect(controller.create(invalidDto)).rejects.toThrow();
     });
@@ -144,11 +147,16 @@ describe('RepositoryController', () => {
 
   describe('findByFullName', () => {
     it('should return repository by owner and name', async () => {
-      repositoryService.findByFullName.mockResolvedValue(mockRepositoryResponse);
+      repositoryService.findByFullName.mockResolvedValue(
+        mockRepositoryResponse,
+      );
 
       const result = await controller.findByFullName('facebook', 'react');
 
-      expect(repositoryService.findByFullName).toHaveBeenCalledWith('facebook', 'react');
+      expect(repositoryService.findByFullName).toHaveBeenCalledWith(
+        'facebook',
+        'react',
+      );
       expect(result).toEqual(mockRepositoryResponse);
     });
 
@@ -174,7 +182,10 @@ describe('RepositoryController', () => {
 
       const result = await controller.update(repositoryId, updateDto);
 
-      expect(repositoryService.update).toHaveBeenCalledWith(repositoryId, updateDto);
+      expect(repositoryService.update).toHaveBeenCalledWith(
+        repositoryId,
+        updateDto,
+      );
       expect(result.description).toBe('Updated description');
       expect(result.active).toBe(false);
     });
@@ -204,17 +215,25 @@ describe('RepositoryController', () => {
 
       const result = await controller.syncRepository(repositoryId, syncDto);
 
-      expect(repositoryService.syncRepository).toHaveBeenCalledWith(repositoryId, syncDto);
+      expect(repositoryService.syncRepository).toHaveBeenCalledWith(
+        repositoryId,
+        syncDto,
+      );
       expect(result.lastCommitSha).toBe('xyz789');
     });
 
     it('should sync without dto', async () => {
       const repositoryId = '123e4567-e89b-12d3-a456-426614174000';
-      repositoryService.syncRepository.mockResolvedValue(mockRepositoryResponse);
+      repositoryService.syncRepository.mockResolvedValue(
+        mockRepositoryResponse,
+      );
 
       const result = await controller.syncRepository(repositoryId);
 
-      expect(repositoryService.syncRepository).toHaveBeenCalledWith(repositoryId, undefined);
+      expect(repositoryService.syncRepository).toHaveBeenCalledWith(
+        repositoryId,
+        undefined,
+      );
       expect(result).toEqual(mockRepositoryResponse);
     });
   });
@@ -222,7 +241,12 @@ describe('RepositoryController', () => {
   describe('getRepositoryFiles', () => {
     const mockFiles = [
       { name: 'src', path: 'src', type: 'dir' as const, size: 0 },
-      { name: 'package.json', path: 'package.json', type: 'file' as const, size: 1024 },
+      {
+        name: 'package.json',
+        path: 'package.json',
+        type: 'file' as const,
+        size: 1024,
+      },
     ];
 
     it('should return repository files with default parameters', async () => {
@@ -231,7 +255,11 @@ describe('RepositoryController', () => {
 
       const result = await controller.getRepositoryFiles(repositoryId);
 
-      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(repositoryId, '', undefined);
+      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(
+        repositoryId,
+        '',
+        undefined,
+      );
       expect(result).toEqual(mockFiles);
     });
 
@@ -239,9 +267,17 @@ describe('RepositoryController', () => {
       const repositoryId = '123e4567-e89b-12d3-a456-426614174000';
       repositoryService.getRepositoryFiles.mockResolvedValue(mockFiles);
 
-      const result = await controller.getRepositoryFiles(repositoryId, 'src', 'develop');
+      const result = await controller.getRepositoryFiles(
+        repositoryId,
+        'src',
+        'develop',
+      );
 
-      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(repositoryId, 'src', 'develop');
+      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(
+        repositoryId,
+        'src',
+        'develop',
+      );
       expect(result).toEqual(mockFiles);
     });
   });
@@ -260,7 +296,11 @@ describe('RepositoryController', () => {
 
       const result = await controller.getFileContent(repositoryId, filePath);
 
-      expect(repositoryService.getFileContent).toHaveBeenCalledWith(repositoryId, filePath, undefined);
+      expect(repositoryService.getFileContent).toHaveBeenCalledWith(
+        repositoryId,
+        filePath,
+        undefined,
+      );
       expect(result).toEqual(mockFileContent);
     });
 
@@ -275,29 +315,45 @@ describe('RepositoryController', () => {
       };
       repositoryService.getFileContent.mockResolvedValue(tsFileContent);
 
-      const result = await controller.getFileContent(repositoryId, filePath, branch);
+      const result = await controller.getFileContent(
+        repositoryId,
+        filePath,
+        branch,
+      );
 
-      expect(repositoryService.getFileContent).toHaveBeenCalledWith(repositoryId, filePath, branch);
+      expect(repositoryService.getFileContent).toHaveBeenCalledWith(
+        repositoryId,
+        filePath,
+        branch,
+      );
       expect(result).toEqual(tsFileContent);
     });
 
     it('should handle missing filePath parameter', async () => {
       const repositoryId = '123e4567-e89b-12d3-a456-426614174000';
-      
+
       // This would normally be caught by query validation
       // Testing that the controller properly passes the parameter
-      repositoryService.getFileContent.mockRejectedValue(new Error('File path required'));
+      repositoryService.getFileContent.mockRejectedValue(
+        new Error('File path required'),
+      );
 
-      await expect(controller.getFileContent(repositoryId, '')).rejects.toThrow();
+      await expect(
+        controller.getFileContent(repositoryId, ''),
+      ).rejects.toThrow();
     });
   });
 
   describe('error handling', () => {
     it('should propagate service errors', async () => {
       const repositoryId = 'invalid-id';
-      repositoryService.findOne.mockRejectedValue(new Error('Repository not found'));
+      repositoryService.findOne.mockRejectedValue(
+        new Error('Repository not found'),
+      );
 
-      await expect(controller.findOne(repositoryId)).rejects.toThrow('Repository not found');
+      await expect(controller.findOne(repositoryId)).rejects.toThrow(
+        'Repository not found',
+      );
     });
 
     it('should handle validation errors from service', async () => {
@@ -305,9 +361,13 @@ describe('RepositoryController', () => {
         owner: 'facebook',
         name: 'react',
       };
-      repositoryService.create.mockRejectedValue(new Error('GitHub repository not accessible'));
+      repositoryService.create.mockRejectedValue(
+        new Error('GitHub repository not accessible'),
+      );
 
-      await expect(controller.create(createDto)).rejects.toThrow('GitHub repository not accessible');
+      await expect(controller.create(createDto)).rejects.toThrow(
+        'GitHub repository not accessible',
+      );
     });
   });
 
@@ -325,11 +385,16 @@ describe('RepositoryController', () => {
     });
 
     it('should accept valid owner and name parameters', async () => {
-      repositoryService.findByFullName.mockResolvedValue(mockRepositoryResponse);
+      repositoryService.findByFullName.mockResolvedValue(
+        mockRepositoryResponse,
+      );
 
       await controller.findByFullName('facebook', 'react');
 
-      expect(repositoryService.findByFullName).toHaveBeenCalledWith('facebook', 'react');
+      expect(repositoryService.findByFullName).toHaveBeenCalledWith(
+        'facebook',
+        'react',
+      );
     });
 
     it('should handle optional query parameters', async () => {
@@ -338,15 +403,27 @@ describe('RepositoryController', () => {
 
       // Test with default empty path
       await controller.getRepositoryFiles(repositoryId);
-      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(repositoryId, '', undefined);
+      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(
+        repositoryId,
+        '',
+        undefined,
+      );
 
       // Test with custom path but no branch
       await controller.getRepositoryFiles(repositoryId, 'src');
-      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(repositoryId, 'src', undefined);
+      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(
+        repositoryId,
+        'src',
+        undefined,
+      );
 
       // Test with both path and branch
       await controller.getRepositoryFiles(repositoryId, 'src', 'main');
-      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(repositoryId, 'src', 'main');
+      expect(repositoryService.getRepositoryFiles).toHaveBeenCalledWith(
+        repositoryId,
+        'src',
+        'main',
+      );
     });
   });
-}); 
+});

@@ -126,7 +126,15 @@ export interface FingerprintConfig {
 }
 
 export interface ParserConfig {
-  language: 'typescript' | 'javascript' | 'python' | 'java' | 'cpp' | 'c' | 'go' | 'rust';
+  language:
+    | 'typescript'
+    | 'javascript'
+    | 'python'
+    | 'java'
+    | 'cpp'
+    | 'c'
+    | 'go'
+    | 'rust';
   version?: string;
   strict: boolean;
   includeComments: boolean;
@@ -153,4 +161,4 @@ export interface CodeStructureComparison {
     newName: string;
     function: FunctionInfo;
   }>;
-} 
+}

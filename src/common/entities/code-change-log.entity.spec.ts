@@ -36,7 +36,8 @@ describe('CodeChangeLog Entity', () => {
 +  getUserById(id: string): Promise<User> {
      return this.repository.findOne(id);
    }`;
-    codeChangeLog.analysisResult = 'Function signature changed to async pattern';
+    codeChangeLog.analysisResult =
+      'Function signature changed to async pattern';
     codeChangeLog.analyzed = true;
     codeChangeLog.analyzedAt = new Date('2024-01-01T12:00:00Z');
     codeChangeLog.createdAt = new Date('2024-01-01T00:00:00Z');
@@ -69,9 +70,15 @@ describe('CodeChangeLog Entity', () => {
     });
 
     it('should have correct change type values', () => {
-      const validChangeTypes = ['added', 'modified', 'deleted', 'moved', 'renamed'];
-      
-      validChangeTypes.forEach(changeType => {
+      const validChangeTypes = [
+        'added',
+        'modified',
+        'deleted',
+        'moved',
+        'renamed',
+      ];
+
+      validChangeTypes.forEach((changeType) => {
         codeChangeLog.changeType = changeType as any;
         expect(codeChangeLog.changeType).toBe(changeType);
       });
@@ -83,8 +90,12 @@ describe('CodeChangeLog Entity', () => {
       expect(codeChangeLog.changeDetails.linesDeleted).toBe(2);
       expect(codeChangeLog.changeDetails.linesModified).toBe(3);
       expect(codeChangeLog.changeDetails.similarityScore).toBe(0.85);
-      expect(codeChangeLog.changeDetails.affectedTests).toContain('user.service.spec.ts');
-      expect(codeChangeLog.changeDetails.affectedDependencies).toContain('user.controller.ts');
+      expect(codeChangeLog.changeDetails.affectedTests).toContain(
+        'user.service.spec.ts',
+      );
+      expect(codeChangeLog.changeDetails.affectedDependencies).toContain(
+        'user.controller.ts',
+      );
     });
   });
 
@@ -146,21 +157,27 @@ describe('CodeChangeLog Entity', () => {
         codeChangeLog.changeType = 'added';
         codeChangeLog.functionName = 'newFunction';
         codeChangeLog.filePath = 'test.ts';
-        expect(codeChangeLog.changeDescription).toBe('Added function newFunction in test.ts');
+        expect(codeChangeLog.changeDescription).toBe(
+          'Added function newFunction in test.ts',
+        );
       });
 
       it('should describe deleted changes correctly', () => {
         codeChangeLog.changeType = 'deleted';
         codeChangeLog.functionName = 'oldFunction';
         codeChangeLog.filePath = 'test.ts';
-        expect(codeChangeLog.changeDescription).toBe('Deleted function oldFunction from test.ts');
+        expect(codeChangeLog.changeDescription).toBe(
+          'Deleted function oldFunction from test.ts',
+        );
       });
 
       it('should describe modified changes correctly', () => {
         codeChangeLog.changeType = 'modified';
         codeChangeLog.functionName = 'modifiedFunction';
         codeChangeLog.filePath = 'test.ts';
-        expect(codeChangeLog.changeDescription).toBe('Modified function modifiedFunction in test.ts');
+        expect(codeChangeLog.changeDescription).toBe(
+          'Modified function modifiedFunction in test.ts',
+        );
       });
 
       it('should describe moved changes correctly', () => {
@@ -168,7 +185,9 @@ describe('CodeChangeLog Entity', () => {
         codeChangeLog.functionName = 'movedFunction';
         codeChangeLog.oldFilePath = 'old/test.ts';
         codeChangeLog.filePath = 'new/test.ts';
-        expect(codeChangeLog.changeDescription).toBe('Moved function movedFunction from old/test.ts to new/test.ts');
+        expect(codeChangeLog.changeDescription).toBe(
+          'Moved function movedFunction from old/test.ts to new/test.ts',
+        );
       });
 
       it('should describe renamed changes correctly', () => {
@@ -176,7 +195,9 @@ describe('CodeChangeLog Entity', () => {
         codeChangeLog.oldFunctionName = 'oldName';
         codeChangeLog.functionName = 'newName';
         codeChangeLog.filePath = 'test.ts';
-        expect(codeChangeLog.changeDescription).toBe('Renamed oldName to newName in test.ts');
+        expect(codeChangeLog.changeDescription).toBe(
+          'Renamed oldName to newName in test.ts',
+        );
       });
 
       it('should handle missing function names', () => {
@@ -273,7 +294,7 @@ describe('CodeChangeLog Entity', () => {
       const newChangeLog = new CodeChangeLog();
       newChangeLog.analyzed = false;
       expect(newChangeLog.analyzed).toBe(false);
-      
+
       newChangeLog.analyzed = true;
       expect(newChangeLog.analyzed).toBe(true);
     });
@@ -282,7 +303,7 @@ describe('CodeChangeLog Entity', () => {
   describe('Edge Cases', () => {
     it('should handle empty changeDetails', () => {
       codeChangeLog.changeDetails = {};
-      
+
       expect(codeChangeLog.isSignificantChange).toBe(false);
       expect(codeChangeLog.impactLevel).toBe('low');
     });
@@ -295,7 +316,7 @@ describe('CodeChangeLog Entity', () => {
       codeChangeLog.oldFilePath = undefined;
       codeChangeLog.diffContent = undefined;
       codeChangeLog.analysisResult = undefined;
-      
+
       expect(() => codeChangeLog.changeDescription).not.toThrow();
       expect(() => codeChangeLog.isSignificantChange).not.toThrow();
       expect(() => codeChangeLog.impactLevel).not.toThrow();
@@ -311,12 +332,17 @@ describe('CodeChangeLog Entity', () => {
         newStartLine: 10,
         newEndLine: 110,
         oldSignature: 'complexFunction(a: string, b: number, c: object): any',
-        newSignature: 'complexFunction(a: string, b: number, c: ComplexObject): Promise<ComplexResult>',
+        newSignature:
+          'complexFunction(a: string, b: number, c: ComplexObject): Promise<ComplexResult>',
         oldFingerprint: 'abc123',
         newFingerprint: 'def456',
         similarityScore: 0.65,
         diffSummary: 'Major refactoring with type improvements',
-        affectedTests: ['test1.spec.ts', 'test2.spec.ts', 'integration.spec.ts'],
+        affectedTests: [
+          'test1.spec.ts',
+          'test2.spec.ts',
+          'integration.spec.ts',
+        ],
         affectedDependencies: ['controller.ts', 'service.ts', 'model.ts'],
         customMetric: 'high complexity',
         nestedData: {
@@ -329,8 +355,12 @@ describe('CodeChangeLog Entity', () => {
       expect(codeChangeLog.impactLevel).toBe('high');
       expect(codeChangeLog.changeDetails.affectedTests).toHaveLength(3);
       expect(codeChangeLog.changeDetails.affectedDependencies).toHaveLength(3);
-      expect((codeChangeLog.changeDetails as any).customMetric).toBe('high complexity');
-      expect((codeChangeLog.changeDetails as any).nestedData.complexity).toBe(15);
+      expect((codeChangeLog.changeDetails as any).customMetric).toBe(
+        'high complexity',
+      );
+      expect((codeChangeLog.changeDetails as any).nestedData.complexity).toBe(
+        15,
+      );
     });
 
     it('should handle very long diff content', () => {
@@ -341,9 +371,9 @@ describe('CodeChangeLog Entity', () => {
     it('should handle unicode characters in content', () => {
       codeChangeLog.functionName = 'testFunction_한글_🚀';
       codeChangeLog.analysisResult = 'Analysis with unicode: 中文, العربية, 🎯';
-      
+
       expect(codeChangeLog.functionName).toContain('한글');
       expect(codeChangeLog.analysisResult).toContain('🎯');
     });
   });
-}); 
+});

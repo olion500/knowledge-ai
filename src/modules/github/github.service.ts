@@ -52,7 +52,10 @@ export class GitHubService {
     }
   }
 
-  async getFileContent(filePath: string, branch = 'main'): Promise<GitHubContent | null> {
+  async getFileContent(
+    filePath: string,
+    branch = 'main',
+  ): Promise<GitHubContent | null> {
     try {
       const { data } = await this.octokit.repos.getContent({
         owner: this.defaultRepo.owner,
@@ -144,7 +147,11 @@ export class GitHubService {
     };
 
     if (existingFile) {
-      return this.updateFile(filePath, { ...request, sha: existingFile.sha }, branch);
+      return this.updateFile(
+        filePath,
+        { ...request, sha: existingFile.sha },
+        branch,
+      );
     } else {
       return this.createFile(filePath, request, branch);
     }
@@ -174,12 +181,17 @@ export class GitHubService {
             pull_number: data.number,
             reviewers: pullRequest.reviewers,
           });
-          this.logger.log(`Added reviewers to PR #${data.number}: ${pullRequest.reviewers.join(', ')}`);
+          this.logger.log(
+            `Added reviewers to PR #${data.number}: ${pullRequest.reviewers.join(', ')}`,
+          );
         } catch (reviewerError) {
-          this.logger.warn(`Failed to add reviewers to PR #${data.number}. Reviewers must be collaborators of the repository.`, {
-            requestedReviewers: pullRequest.reviewers,
-            error: reviewerError.message,
-          });
+          this.logger.warn(
+            `Failed to add reviewers to PR #${data.number}. Reviewers must be collaborators of the repository.`,
+            {
+              requestedReviewers: pullRequest.reviewers,
+              error: reviewerError.message,
+            },
+          );
         }
       }
 
@@ -192,12 +204,17 @@ export class GitHubService {
             issue_number: data.number,
             assignees: pullRequest.assignees,
           });
-          this.logger.log(`Added assignees to PR #${data.number}: ${pullRequest.assignees.join(', ')}`);
+          this.logger.log(
+            `Added assignees to PR #${data.number}: ${pullRequest.assignees.join(', ')}`,
+          );
         } catch (assigneeError) {
-          this.logger.warn(`Failed to add assignees to PR #${data.number}. Assignees must be collaborators of the repository.`, {
-            requestedAssignees: pullRequest.assignees,
-            error: assigneeError.message,
-          });
+          this.logger.warn(
+            `Failed to add assignees to PR #${data.number}. Assignees must be collaborators of the repository.`,
+            {
+              requestedAssignees: pullRequest.assignees,
+              error: assigneeError.message,
+            },
+          );
         }
       }
 
@@ -210,7 +227,9 @@ export class GitHubService {
             issue_number: data.number,
             labels: pullRequest.labels,
           });
-          this.logger.log(`Added labels to PR #${data.number}: ${pullRequest.labels.join(', ')}`);
+          this.logger.log(
+            `Added labels to PR #${data.number}: ${pullRequest.labels.join(', ')}`,
+          );
         } catch (labelError) {
           this.logger.warn(`Failed to add labels to PR #${data.number}`, {
             requestedLabels: pullRequest.labels,
@@ -233,11 +252,14 @@ export class GitHubService {
     const basePath = this.configService.get<string>('DOCS_BASE_PATH') || 'docs';
     const sanitizedTopic = topic.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    
+
     return `${basePath}/${sanitizedTopic}/${sanitizedTitle}.md`;
   }
 
-  async listDirectoryContents(dirPath: string, branch = 'main'): Promise<GitHubContent[]> {
+  async listDirectoryContents(
+    dirPath: string,
+    branch = 'main',
+  ): Promise<GitHubContent[]> {
     try {
       const { data } = await this.octokit.repos.getContent({
         owner: this.defaultRepo.owner,
@@ -255,7 +277,10 @@ export class GitHubService {
       if (error.status === 404) {
         return [];
       }
-      this.logger.error(`Failed to list directory contents for ${dirPath}`, error);
+      this.logger.error(
+        `Failed to list directory contents for ${dirPath}`,
+        error,
+      );
       throw error;
     }
   }
@@ -267,18 +292,18 @@ export class GitHubService {
 
     try {
       const contents = await this.listDirectoryContents(topicPath);
-      
+
       // Find markdown documents in the topic directory
       const markdownFiles = contents
-        .filter(file => 
-          file.type === 'file' && 
-          file.name.endsWith('.md')
-        )
+        .filter((file) => file.type === 'file' && file.name.endsWith('.md'))
         .sort((a, b) => b.name.localeCompare(a.name)); // Sort by name descending (alphabetical)
 
       return markdownFiles.length > 0 ? markdownFiles[0] : null;
     } catch (error) {
-      this.logger.error(`Failed to find existing document for topic ${topic}`, error);
+      this.logger.error(
+        `Failed to find existing document for topic ${topic}`,
+        error,
+      );
       return null;
     }
   }
@@ -312,12 +337,19 @@ export class GitHubService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get repository info for ${owner}/${name}`, error);
+      this.logger.error(
+        `Failed to get repository info for ${owner}/${name}`,
+        error,
+      );
       throw error;
     }
   }
 
-  async getLatestCommit(owner: string, name: string, branch: string): Promise<any> {
+  async getLatestCommit(
+    owner: string,
+    name: string,
+    branch: string,
+  ): Promise<any> {
     try {
       const { data } = await this.octokit.repos.getCommit({
         owner,
@@ -334,19 +366,29 @@ export class GitHubService {
           date: data.commit.author?.date || new Date().toISOString(),
         },
         url: data.html_url,
-        stats: data.stats ? {
-          additions: data.stats.additions,
-          deletions: data.stats.deletions,
-          total: data.stats.total,
-        } : undefined,
+        stats: data.stats
+          ? {
+              additions: data.stats.additions,
+              deletions: data.stats.deletions,
+              total: data.stats.total,
+            }
+          : undefined,
       };
     } catch (error) {
-      this.logger.error(`Failed to get latest commit for ${owner}/${name}:${branch}`, error);
+      this.logger.error(
+        `Failed to get latest commit for ${owner}/${name}:${branch}`,
+        error,
+      );
       throw error;
     }
   }
 
-  async getCommitsBetween(owner: string, name: string, since: string, until?: string): Promise<any[]> {
+  async getCommitsBetween(
+    owner: string,
+    name: string,
+    since: string,
+    until?: string,
+  ): Promise<any[]> {
     try {
       const params: any = {
         owner,
@@ -359,8 +401,8 @@ export class GitHubService {
       }
 
       const { data } = await this.octokit.repos.listCommits(params);
-      
-      return data.map(commit => ({
+
+      return data.map((commit) => ({
         sha: commit.sha,
         message: commit.commit.message,
         author: {
@@ -371,12 +413,18 @@ export class GitHubService {
         url: commit.html_url,
       }));
     } catch (error) {
-      this.logger.error(`Failed to get commits between ${since} and ${until} for ${owner}/${name}`, error);
+      this.logger.error(
+        `Failed to get commits between ${since} and ${until} for ${owner}/${name}`,
+        error,
+      );
       throw error;
     }
   }
 
-  async getRepositoryLanguages(owner: string, name: string): Promise<Record<string, number>> {
+  async getRepositoryLanguages(
+    owner: string,
+    name: string,
+  ): Promise<Record<string, number>> {
     try {
       const { data } = await this.octokit.repos.listLanguages({
         owner,
@@ -385,12 +433,20 @@ export class GitHubService {
 
       return data;
     } catch (error) {
-      this.logger.error(`Failed to get repository languages for ${owner}/${name}`, error);
+      this.logger.error(
+        `Failed to get repository languages for ${owner}/${name}`,
+        error,
+      );
       throw error;
     }
   }
 
-  async getRepositoryContents(owner: string, name: string, path = '', branch?: string): Promise<GitHubContent[]> {
+  async getRepositoryContents(
+    owner: string,
+    name: string,
+    path = '',
+    branch?: string,
+  ): Promise<GitHubContent[]> {
     try {
       const params: any = {
         owner,
@@ -413,18 +469,25 @@ export class GitHubService {
       if (error.status === 404) {
         return [];
       }
-      this.logger.error(`Failed to get repository contents for ${owner}/${name}:${path}`, error);
+      this.logger.error(
+        `Failed to get repository contents for ${owner}/${name}:${path}`,
+        error,
+      );
       throw error;
     }
   }
 
-  async getCommits(owner: string, repo: string, options?: {
-    since?: string;
-    until?: string;
-    sha?: string;
-    per_page?: number;
-    page?: number;
-  }): Promise<any[]> {
+  async getCommits(
+    owner: string,
+    repo: string,
+    options?: {
+      since?: string;
+      until?: string;
+      sha?: string;
+      per_page?: number;
+      page?: number;
+    },
+  ): Promise<any[]> {
     try {
       const { data } = await this.octokit.repos.listCommits({
         owner,
@@ -438,4 +501,4 @@ export class GitHubService {
       throw error;
     }
   }
-} 
+}

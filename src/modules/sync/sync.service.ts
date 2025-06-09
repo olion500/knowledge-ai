@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository as TypeOrmRepository, MoreThan, LessThanOrEqual } from 'typeorm';
+import {
+  Repository as TypeOrmRepository,
+  MoreThan,
+  LessThanOrEqual,
+} from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { SyncJob } from '../../common/entities/sync-job.entity';
 import { Repository } from '../../common/entities/repository.entity';
@@ -52,23 +56,27 @@ export class SyncService {
 
     try {
       const repositories = await this.repositoryRepository.find({
-        where: { 
-          active: true
+        where: {
+          active: true,
         },
       });
 
       // Filter repositories that have sync enabled and daily frequency
-      const syncEnabledRepos = repositories.filter(repo => 
-        repo.syncConfig?.enabled !== false && 
-        (repo.syncConfig?.syncFrequency === 'daily' || !repo.syncConfig?.syncFrequency)
+      const syncEnabledRepos = repositories.filter(
+        (repo) =>
+          repo.syncConfig?.enabled !== false &&
+          (repo.syncConfig?.syncFrequency === 'daily' ||
+            !repo.syncConfig?.syncFrequency),
       );
 
-      const syncPromises = syncEnabledRepos.map(repo => 
-        this.syncRepository(repo.id, 'scheduled')
+      const syncPromises = syncEnabledRepos.map((repo) =>
+        this.syncRepository(repo.id, 'scheduled'),
       );
 
       await Promise.allSettled(syncPromises);
-      this.logger.log(`Daily sync completed for ${syncEnabledRepos.length} repositories`);
+      this.logger.log(
+        `Daily sync completed for ${syncEnabledRepos.length} repositories`,
+      );
     } catch (error) {
       this.logger.error('Failed to run daily sync', error);
     }
@@ -82,7 +90,7 @@ export class SyncService {
     type: 'scheduled' | 'manual' | 'webhook' = 'manual',
   ): Promise<SyncResult> {
     const jobId = await this.createSyncJob(repositoryId, type);
-    
+
     try {
       const result = await this.executeSyncJob(jobId);
       await this.completeSyncJob(jobId, result);
@@ -110,14 +118,16 @@ export class SyncService {
 
     // Check for existing running jobs
     const existingJob = await this.syncJobRepository.findOne({
-      where: { 
-        repositoryId, 
-        status: 'running' 
+      where: {
+        repositoryId,
+        status: 'running',
       },
     });
 
     if (existingJob) {
-      throw new Error(`Sync job already running for repository ${repositoryId}`);
+      throw new Error(
+        `Sync job already running for repository ${repositoryId}`,
+      );
     }
 
     const syncJob = this.syncJobRepository.create({
@@ -128,8 +138,10 @@ export class SyncService {
     });
 
     const savedJob = await this.syncJobRepository.save(syncJob);
-    this.logger.log(`Created sync job ${savedJob.id} for repository ${repositoryId}`);
-    
+    this.logger.log(
+      `Created sync job ${savedJob.id} for repository ${repositoryId}`,
+    );
+
     return savedJob.id;
   }
 
@@ -150,7 +162,9 @@ export class SyncService {
     job.updateStatus('running');
     await this.syncJobRepository.save(job);
 
-    this.logger.log(`Starting sync job ${jobId} for repository ${job.repository.fullName}`);
+    this.logger.log(
+      `Starting sync job ${jobId} for repository ${job.repository.fullName}`,
+    );
 
     // Initialize progress tracking
     const progress: SyncProgress = {
@@ -169,17 +183,26 @@ export class SyncService {
       this.activeSyncJobs.set(jobId, progress);
 
       const commits = await this.getNewCommits(job.repository);
-      
+
       if (commits.length === 0) {
-        this.logger.log(`No new commits found for repository ${job.repository.fullName}`);
-        return this.createSyncResult(jobId, job.repository, startTime, new Date(), {
-          totalFiles: 0,
-          analyzedFiles: 0,
-          newFunctions: 0,
-          modifiedFunctions: 0,
-          deletedFunctions: 0,
-          errors: 0,
-        }, commits);
+        this.logger.log(
+          `No new commits found for repository ${job.repository.fullName}`,
+        );
+        return this.createSyncResult(
+          jobId,
+          job.repository,
+          startTime,
+          new Date(),
+          {
+            totalFiles: 0,
+            analyzedFiles: 0,
+            newFunctions: 0,
+            modifiedFunctions: 0,
+            deletedFunctions: 0,
+            errors: 0,
+          },
+          commits,
+        );
       }
 
       // 2. Analyze repository with new commit
@@ -200,7 +223,10 @@ export class SyncService {
 
       // 3. Compare with previous version if available
       let changeComparison;
-      if (job.repository.lastCommitSha && job.repository.lastCommitSha !== latestCommit.sha) {
+      if (
+        job.repository.lastCommitSha &&
+        job.repository.lastCommitSha !== latestCommit.sha
+      ) {
         changeComparison = await this.codeAnalysisService.compareCommits(
           job.repositoryId,
           job.repository.lastCommitSha,
@@ -208,11 +234,12 @@ export class SyncService {
         );
 
         // 3.1. Analyze changes with LLM for documentation updates
-        if (changeComparison && (
-          changeComparison.added.length > 0 || 
-          changeComparison.modified.length > 0 || 
-          changeComparison.deleted.length > 0
-        )) {
+        if (
+          changeComparison &&
+          (changeComparison.added.length > 0 ||
+            changeComparison.modified.length > 0 ||
+            changeComparison.deleted.length > 0)
+        ) {
           try {
             await this.analyzeChangesForDocumentation(
               jobId,
@@ -221,7 +248,9 @@ export class SyncService {
               commits,
             );
           } catch (error) {
-            this.logger.warn(`Failed to analyze changes for documentation: ${error.message}`);
+            this.logger.warn(
+              `Failed to analyze changes for documentation: ${error.message}`,
+            );
           }
         }
       }
@@ -244,8 +273,11 @@ export class SyncService {
         toCommit: latestCommit.sha,
         filesAnalyzed: analysisResult.analyzedFiles,
         functionsFound: analysisResult.functions,
-        changesDetected: changeComparison ? 
-          changeComparison.added.length + changeComparison.modified.length + changeComparison.deleted.length : 0,
+        changesDetected: changeComparison
+          ? changeComparison.added.length +
+            changeComparison.modified.length +
+            changeComparison.deleted.length
+          : 0,
         totalFiles: analysisResult.totalFiles,
       };
 
@@ -256,18 +288,24 @@ export class SyncService {
       this.activeSyncJobs.set(jobId, progress);
 
       const endTime = new Date();
-      const result = this.createSyncResult(jobId, job.repository, startTime, endTime, {
-        totalFiles: analysisResult.totalFiles,
-        analyzedFiles: analysisResult.analyzedFiles,
-        newFunctions: changeComparison?.added.length || 0,
-        modifiedFunctions: changeComparison?.modified.length || 0,
-        deletedFunctions: changeComparison?.deleted.length || 0,
-        errors: analysisResult.errors.length,
-      }, commits);
+      const result = this.createSyncResult(
+        jobId,
+        job.repository,
+        startTime,
+        endTime,
+        {
+          totalFiles: analysisResult.totalFiles,
+          analyzedFiles: analysisResult.analyzedFiles,
+          newFunctions: changeComparison?.added.length || 0,
+          modifiedFunctions: changeComparison?.modified.length || 0,
+          deletedFunctions: changeComparison?.deleted.length || 0,
+          errors: analysisResult.errors.length,
+        },
+        commits,
+      );
 
       this.logger.log(`Sync job ${jobId} completed successfully`);
       return result;
-
     } finally {
       this.activeSyncJobs.delete(jobId);
     }
@@ -288,7 +326,7 @@ export class SyncService {
         },
       );
 
-      return commits.map(commit => ({
+      return commits.map((commit) => ({
         sha: commit.sha,
         message: commit.commit.message,
         author: {
@@ -302,14 +340,19 @@ export class SyncService {
           date: commit.commit.committer.date,
         },
         url: commit.html_url,
-        stats: commit.stats ? {
-          additions: commit.stats.additions,
-          deletions: commit.stats.deletions,
-          total: commit.stats.total,
-        } : undefined,
+        stats: commit.stats
+          ? {
+              additions: commit.stats.additions,
+              deletions: commit.stats.deletions,
+              total: commit.stats.total,
+            }
+          : undefined,
       }));
     } catch (error) {
-      this.logger.error(`Failed to get commits for ${repository.fullName}`, error);
+      this.logger.error(
+        `Failed to get commits for ${repository.fullName}`,
+        error,
+      );
       return [];
     }
   }
@@ -317,7 +360,10 @@ export class SyncService {
   /**
    * Complete sync job with success
    */
-  private async completeSyncJob(jobId: string, result: SyncResult): Promise<void> {
+  private async completeSyncJob(
+    jobId: string,
+    result: SyncResult,
+  ): Promise<void> {
     const job = await this.syncJobRepository.findOne({ where: { id: jobId } });
     if (job) {
       job.updateStatus('completed');
@@ -332,15 +378,17 @@ export class SyncService {
     const job = await this.syncJobRepository.findOne({ where: { id: jobId } });
     if (job) {
       job.updateStatus('failed', error);
-      
+
       if (job.canRetry) {
         job.incrementRetry();
         job.updateStatus('pending');
-        this.logger.warn(`Sync job ${jobId} failed, scheduled for retry ${job.retryCount}/${job.maxRetries}`);
+        this.logger.warn(
+          `Sync job ${jobId} failed, scheduled for retry ${job.retryCount}/${job.maxRetries}`,
+        );
       } else {
         this.logger.error(`Sync job ${jobId} failed permanently: ${error}`);
       }
-      
+
       await this.syncJobRepository.save(job);
     }
   }
@@ -409,7 +457,7 @@ export class SyncService {
    */
   async cancelSyncJob(jobId: string): Promise<void> {
     const job = await this.syncJobRepository.findOne({ where: { id: jobId } });
-    
+
     if (job && job.status === 'running') {
       job.updateStatus('cancelled');
       await this.syncJobRepository.save(job);
@@ -431,27 +479,39 @@ export class SyncService {
     },
     commits: any[],
   ): Promise<void> {
-    this.logger.log(`Analyzing changes for documentation updates: ${repository.fullName}`);
+    this.logger.log(
+      `Analyzing changes for documentation updates: ${repository.fullName}`,
+    );
 
     try {
       // Analyze with LLM
-      const analysisResult = await this.codeAnalysisLLMService.analyzeCodeChangesForDocumentation(
-        repository,
-        changes,
-        commits,
-      );
+      const analysisResult =
+        await this.codeAnalysisLLMService.analyzeCodeChangesForDocumentation(
+          repository,
+          changes,
+          commits,
+        );
 
       // Only create documentation update if LLM recommends it
       if (analysisResult.shouldUpdate && analysisResult.confidence > 30) {
-        await this.createDocumentationUpdate(syncJobId, repository, analysisResult, changes, commits);
+        await this.createDocumentationUpdate(
+          syncJobId,
+          repository,
+          analysisResult,
+          changes,
+          commits,
+        );
       } else {
         this.logger.log(
           `LLM analysis suggests no documentation update needed for ${repository.fullName} ` +
-          `(confidence: ${analysisResult.confidence}%)`
+            `(confidence: ${analysisResult.confidence}%)`,
         );
       }
     } catch (error) {
-      this.logger.error(`Failed to analyze changes for documentation: ${error.message}`, error);
+      this.logger.error(
+        `Failed to analyze changes for documentation: ${error.message}`,
+        error,
+      );
     }
   }
 
@@ -466,8 +526,10 @@ export class SyncService {
     commits: any[],
   ): Promise<void> {
     // Determine update type
-    let updateType: 'readme' | 'api_docs' | 'changelog' | 'multiple' = 'changelog';
-    let priority = analysisResult.suggestedUpdates.changelog?.priority || 'medium';
+    let updateType: 'readme' | 'api_docs' | 'changelog' | 'multiple' =
+      'changelog';
+    let priority =
+      analysisResult.suggestedUpdates.changelog?.priority || 'medium';
 
     const updates = analysisResult.suggestedUpdates;
     const updateCount = [
@@ -521,7 +583,7 @@ export class SyncService {
 
     this.logger.log(
       `Created documentation update recommendation for ${repository.fullName} ` +
-      `(type: ${updateType}, priority: ${priority}, confidence: ${analysisResult.confidence}%)`
+        `(type: ${updateType}, priority: ${priority}, confidence: ${analysisResult.confidence}%)`,
     );
   }
 
@@ -533,21 +595,21 @@ export class SyncService {
     priority?: 'low' | 'medium' | 'high',
   ): Promise<DocumentationUpdate[]> {
     const where: any = { status: 'pending' };
-    
+
     if (repositoryId) {
       where.repositoryId = repositoryId;
     }
-    
+
     if (priority) {
       where.priority = priority;
     }
 
     return this.documentationUpdateRepository.find({
       where,
-      order: { 
+      order: {
         priority: 'DESC',
         confidence: 'DESC',
-        createdAt: 'ASC' 
+        createdAt: 'ASC',
       },
       relations: ['repository', 'syncJob'],
       take: 50,
@@ -560,7 +622,7 @@ export class SyncService {
   @Cron(CronExpression.EVERY_10_MINUTES)
   async retryFailedJobs(): Promise<void> {
     const failedJobs = await this.syncJobRepository.find({
-      where: { 
+      where: {
         status: 'pending',
         retryCount: MoreThan(0),
         nextRetryAt: LessThanOrEqual(new Date()),
@@ -580,4 +642,4 @@ export class SyncService {
       }
     }
   }
-} 
+}

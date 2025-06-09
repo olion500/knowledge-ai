@@ -6,12 +6,9 @@ import { RepositoryController } from './repository.controller';
 import { GitHubModule } from '../github/github.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Repository]),
-    GitHubModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Repository]), GitHubModule],
   controllers: [RepositoryController],
   providers: [RepositoryService],
   exports: [RepositoryService],
 })
-export class RepositoryModule {} 
+export class RepositoryModule {}

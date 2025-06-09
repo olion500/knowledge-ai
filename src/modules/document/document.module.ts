@@ -9,4 +9,4 @@ import { GitHubModule } from '../github/github.module';
   providers: [DocumentService],
   exports: [DocumentService],
 })
-export class DocumentModule {} 
+export class DocumentModule {}

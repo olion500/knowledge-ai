@@ -44,6 +44,17 @@ Knowledge Sync AI automatically:
 - **Jira Integration**: Processes issue updates and comments via webhooks
 - **Smart Filtering**: Only processes content marked as important
 
+### Code Tracking & Linking (Phase 1)
+- **GitHub Link Parsing**: Automatically detects GitHub links in documents with various formats:
+  - Single line: `[코드 예시](github://owner/repo/src/file.ts:15)`
+  - Line range: `[코드 범위](github://owner/repo/src/file.ts:15-20)`
+  - Function: `[함수 설명](github://owner/repo/src/file.ts#functionName)`
+  - Class method: `[클래스 메서드](github://owner/repo/src/file.ts#Class.method)`
+- **Code Extraction**: Automatically extracts code snippets from GitHub repositories
+- **Document Enhancement**: Replaces GitHub links with embedded code snippets
+- **Change Tracking**: Monitors code changes through content hashing
+- **API Endpoints**: RESTful APIs for code reference management
+
 ### AI Processing
 - **Summarization**: Extracts key points, decisions, and action items
 - **Classification**: Categorizes content into predefined topics
@@ -255,6 +266,40 @@ curl -X POST http://localhost:3000/slack/collect \
   }'
 ```
 
+### Code Tracking APIs
+
+Process GitHub code links in documents:
+```bash
+curl -X POST http://localhost:3000/code-tracking/process-document \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "doc-123",
+    "title": "API Documentation",
+    "content": "Check this function: [getUserById](github://myorg/api-server/src/user/user.service.ts#getUserById)"
+  }'
+```
+
+Update document with embedded code snippets:
+```bash
+curl -X POST http://localhost:3000/code-tracking/update-document-snippets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "doc-123",
+    "title": "API Documentation", 
+    "content": "..."
+  }'
+```
+
+Get code references for a document:
+```bash
+curl -X GET http://localhost:3000/code-tracking/document/doc-123/references
+```
+
+Get all active code references:
+```bash
+curl -X GET http://localhost:3000/code-tracking/references/active
+```
+
 ### Automatic Processing
 
 The system automatically processes:
@@ -281,6 +326,7 @@ src/
 │   ├── github/           # GitHub integration
 │   ├── llm/              # LLM processing
 │   ├── document/         # Document orchestration
+│   ├── code-tracking/    # Code tracking & linking (Phase 1)
 │   └── database/         # Database operations
 └── main.ts
 ```

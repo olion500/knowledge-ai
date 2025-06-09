@@ -79,4 +79,4 @@ export interface JiraChangelogItem {
   fromString: string;
   to: string;
   toString: string;
-} 
+}

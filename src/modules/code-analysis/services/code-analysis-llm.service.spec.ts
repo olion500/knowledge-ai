@@ -73,7 +73,7 @@ describe('CodeAnalysisLLMService', () => {
     const mockConfigService = {
       get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
         const config = {
-          'LLM_MODEL': 'gpt-4',
+          LLM_MODEL: 'gpt-4',
         };
         return config[key] || defaultValue;
       }),
@@ -135,7 +135,9 @@ describe('CodeAnalysisLLMService', () => {
     });
 
     it('should handle LLM service errors gracefully', async () => {
-      llmService.summarizeContent.mockRejectedValue(new Error('LLM service error'));
+      llmService.summarizeContent.mockRejectedValue(
+        new Error('LLM service error'),
+      );
 
       const changes = {
         added: [mockCodeStructure as CodeStructure],
@@ -308,7 +310,9 @@ describe('CodeAnalysisLLMService', () => {
     });
 
     it('should use fallback values for missing configuration', async () => {
-      configService.get.mockImplementation((key: string, defaultValue?: any) => defaultValue);
+      configService.get.mockImplementation(
+        (key: string, defaultValue?: any) => defaultValue,
+      );
 
       const newService = new CodeAnalysisLLMService(llmService, configService);
       expect(newService).toBeDefined();
@@ -370,4 +374,4 @@ describe('CodeAnalysisLLMService', () => {
       expect(result.suggestedUpdates.apiDocs?.shouldUpdate).toBe(false);
     });
   });
-}); 
+});

@@ -41,4 +41,4 @@ process.env.DOCS_BASE_PATH = 'docs';
 // Global afterEach to clean up mocks
 afterEach(() => {
   jest.clearAllMocks();
-}); 
+});

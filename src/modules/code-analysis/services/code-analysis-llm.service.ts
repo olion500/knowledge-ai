@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LLMService } from '../../llm/llm.service';
-import { 
+import {
   CodeChangeContext,
   CodeFunctionChange,
   DocumentationUpdateRequest,
   DocumentationUpdateResponse,
   LLMAnalysisConfig,
-  CodeAnalysisPrompt
+  CodeAnalysisPrompt,
 } from '../../../common/interfaces/code-analysis-llm.interface';
 import { CodeStructure } from '../../../common/entities/code-structure.entity';
 import { CodeChangeLog } from '../../../common/entities/code-change-log.entity';
@@ -51,7 +51,11 @@ export class CodeAnalysisLLMService {
 
     try {
       // Build code change context
-      const context = await this.buildCodeChangeContext(repository, changes, commits);
+      const context = await this.buildCodeChangeContext(
+        repository,
+        changes,
+        commits,
+      );
 
       // Analyze with LLM
       const analysisResult = await this.performLLMAnalysis(context);
@@ -65,7 +69,10 @@ export class CodeAnalysisLLMService {
         },
       };
     } catch (error) {
-      this.logger.error('Failed to analyze code changes for documentation', error);
+      this.logger.error(
+        'Failed to analyze code changes for documentation',
+        error,
+      );
       return this.createFallbackResponse(startTime);
     }
   }
@@ -82,8 +89,11 @@ export class CodeAnalysisLLMService {
     },
     commits: any[],
   ): Promise<CodeChangeContext> {
-    const mapToFunctionChange = (items: CodeStructure[], changeType: 'added' | 'modified' | 'deleted'): CodeFunctionChange[] => {
-      return items.map(item => ({
+    const mapToFunctionChange = (
+      items: CodeStructure[],
+      changeType: 'added' | 'modified' | 'deleted',
+    ): CodeFunctionChange[] => {
+      return items.map((item) => ({
         functionName: item.functionName || 'unknown',
         className: item.className,
         filePath: item.filePath,
@@ -91,10 +101,12 @@ export class CodeAnalysisLLMService {
         changeType,
         impact: this.calculateChangeImpact(item),
         description: this.generateChangeDescription(item, changeType),
-        complexity: item.metadata ? {
-          cyclomaticComplexity: item.metadata.cyclomaticComplexity || 0,
-          linesOfCode: item.metadata.linesOfCode || 0,
-        } : undefined,
+        complexity: item.metadata
+          ? {
+              cyclomaticComplexity: item.metadata.cyclomaticComplexity || 0,
+              linesOfCode: item.metadata.linesOfCode || 0,
+            }
+          : undefined,
         isPublic: this.isPublicFunction(item),
         isExported: this.isExportedFunction(item),
       }));
@@ -106,13 +118,15 @@ export class CodeAnalysisLLMService {
       ...mapToFunctionChange(changes.deleted, 'deleted'),
     ];
 
-    const significantChanges = allChanges.filter(change => 
-      change.impact === 'high' || (change.impact === 'medium' && change.isPublic)
+    const significantChanges = allChanges.filter(
+      (change) =>
+        change.impact === 'high' ||
+        (change.impact === 'medium' && change.isPublic),
     );
 
     const complexities = allChanges
-      .map(c => c.complexity?.cyclomaticComplexity || 0)
-      .filter(c => c > 0);
+      .map((c) => c.complexity?.cyclomaticComplexity || 0)
+      .filter((c) => c > 0);
 
     return {
       repository: {
@@ -126,7 +140,7 @@ export class CodeAnalysisLLMService {
         from: commits[commits.length - 1]?.sha || '',
         to: commits[0]?.sha || '',
         count: commits.length,
-        details: commits.slice(0, 5).map(commit => ({
+        details: commits.slice(0, 5).map((commit) => ({
           sha: commit.sha.substring(0, 7),
           message: commit.commit.message.split('\n')[0],
           author: commit.commit.author.name,
@@ -143,7 +157,10 @@ export class CodeAnalysisLLMService {
         changedFunctions: changes.modified.length,
         significantChanges: significantChanges.length,
         complexity: {
-          average: complexities.length > 0 ? complexities.reduce((a, b) => a + b, 0) / complexities.length : 0,
+          average:
+            complexities.length > 0
+              ? complexities.reduce((a, b) => a + b, 0) / complexities.length
+              : 0,
           highest: complexities.length > 0 ? Math.max(...complexities) : 0,
         },
       },
@@ -153,7 +170,9 @@ export class CodeAnalysisLLMService {
   /**
    * Perform LLM analysis to determine documentation updates
    */
-  private async performLLMAnalysis(context: CodeChangeContext): Promise<Omit<DocumentationUpdateResponse, 'metadata'>> {
+  private async performLLMAnalysis(
+    context: CodeChangeContext,
+  ): Promise<Omit<DocumentationUpdateResponse, 'metadata'>> {
     const prompt = this.buildAnalysisPrompt(context);
 
     // Use the LLMService's createCompletion approach
@@ -179,7 +198,7 @@ export class CodeAnalysisLLMService {
 
       // Use the summary functionality as a proxy for our analysis
       const response = await this.llmService.summarizeContent(summaryRequest);
-      
+
       // Return the response as JSON string since our parser expects JSON
       return JSON.stringify({
         shouldUpdate: true,
@@ -198,10 +217,11 @@ export class CodeAnalysisLLMService {
             priority: 'medium',
           },
           apiDocs: {
-            shouldUpdate: response.keyPoints.some(point => 
-              point.toLowerCase().includes('api') || 
-              point.toLowerCase().includes('function') ||
-              point.toLowerCase().includes('method')
+            shouldUpdate: response.keyPoints.some(
+              (point) =>
+                point.toLowerCase().includes('api') ||
+                point.toLowerCase().includes('function') ||
+                point.toLowerCase().includes('method'),
             ),
             affectedEndpoints: [],
             priority: 'medium',
@@ -233,34 +253,43 @@ Please analyze the following code changes and determine if documentation updates
 - **Average Complexity**: ${context.summary.complexity.average.toFixed(1)}
 
 ## Recent Commits
-${context.commits.details.map(commit => 
-  `- ${commit.sha}: ${commit.message} (by ${commit.author})`
-).join('\n')}
+${context.commits.details
+  .map((commit) => `- ${commit.sha}: ${commit.message} (by ${commit.author})`)
+  .join('\n')}
 
 ## Function Changes
 
 ### Added Functions (${context.changes.added.length})
-${context.changes.added.map(change => 
-  `- **${change.functionName}** in ${change.filePath}
+${context.changes.added
+  .map(
+    (change) =>
+      `- **${change.functionName}** in ${change.filePath}
     - Signature: \`${change.signature}\`
     - Public: ${change.isPublic}, Exported: ${change.isExported}
-    - Impact: ${change.impact}`
-).join('\n')}
+    - Impact: ${change.impact}`,
+  )
+  .join('\n')}
 
 ### Modified Functions (${context.changes.modified.length})
-${context.changes.modified.map(change => 
-  `- **${change.functionName}** in ${change.filePath}
+${context.changes.modified
+  .map(
+    (change) =>
+      `- **${change.functionName}** in ${change.filePath}
     - Signature: \`${change.signature}\`
     - Public: ${change.isPublic}, Exported: ${change.isExported}
-    - Impact: ${change.impact}`
-).join('\n')}
+    - Impact: ${change.impact}`,
+  )
+  .join('\n')}
 
 ### Deleted Functions (${context.changes.deleted.length})
-${context.changes.deleted.map(change => 
-  `- **${change.functionName}** in ${change.filePath}
+${context.changes.deleted
+  .map(
+    (change) =>
+      `- **${change.functionName}** in ${change.filePath}
     - Was public: ${change.isPublic}, Was exported: ${change.isExported}
-    - Impact: ${change.impact}`
-).join('\n')}
+    - Impact: ${change.impact}`,
+  )
+  .join('\n')}
 
 ## Analysis Request
 Based on these changes, please provide a JSON response with the following structure:
@@ -304,16 +333,16 @@ Focus on:
    * Parse LLM analysis response
    */
   private parseAnalysisResponse(
-    response: string, 
-    context: CodeChangeContext
+    response: string,
+    context: CodeChangeContext,
   ): Omit<DocumentationUpdateResponse, 'metadata'> {
     try {
       // Extract JSON from response
       const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : response;
-      
+
       const parsed = JSON.parse(jsonStr);
-      
+
       // Validate and return structured response
       return {
         shouldUpdate: parsed.shouldUpdate || false,
@@ -346,7 +375,9 @@ Focus on:
   /**
    * Calculate change impact based on function characteristics
    */
-  private calculateChangeImpact(item: CodeStructure): 'low' | 'medium' | 'high' {
+  private calculateChangeImpact(
+    item: CodeStructure,
+  ): 'low' | 'medium' | 'high' {
     const complexity = item.metadata?.cyclomaticComplexity || 0;
     const isPublic = this.isPublicFunction(item);
     const isExported = this.isExportedFunction(item);
@@ -355,18 +386,21 @@ Focus on:
     if (isPublic && complexity > 5) return 'high';
     if (isExported || isPublic) return 'medium';
     if (complexity > 15) return 'medium';
-    
+
     return 'low';
   }
 
   /**
    * Generate change description
    */
-  private generateChangeDescription(item: CodeStructure, changeType: string): string {
+  private generateChangeDescription(
+    item: CodeStructure,
+    changeType: string,
+  ): string {
     const funcName = item.functionName || 'unknown function';
     const className = item.className ? ` in class ${item.className}` : '';
     const complexity = item.metadata?.cyclomaticComplexity || 0;
-    
+
     return `${changeType.charAt(0).toUpperCase() + changeType.slice(1)} ${funcName}${className} (complexity: ${complexity})`;
   }
 
@@ -375,7 +409,9 @@ Focus on:
    */
   private isPublicFunction(item: CodeStructure): boolean {
     const astData = item.astData as any;
-    return astData?.isExported || astData?.modifiers?.includes('public') || false;
+    return (
+      astData?.isExported || astData?.modifiers?.includes('public') || false
+    );
   }
 
   /**
@@ -389,18 +425,21 @@ Focus on:
   /**
    * Create fallback analysis when LLM fails
    */
-  private createFallbackAnalysis(context: CodeChangeContext): Omit<DocumentationUpdateResponse, 'metadata'> {
+  private createFallbackAnalysis(
+    context: CodeChangeContext,
+  ): Omit<DocumentationUpdateResponse, 'metadata'> {
     const hasSignificantChanges = context.summary.significantChanges > 0;
     const hasPublicChanges = [
       ...context.changes.added,
       ...context.changes.modified,
       ...context.changes.deleted,
-    ].some(change => change.isPublic || change.isExported);
+    ].some((change) => change.isPublic || change.isExported);
 
     return {
       shouldUpdate: hasSignificantChanges || hasPublicChanges,
       confidence: hasSignificantChanges ? 80 : 50,
-      reasoning: 'Fallback analysis: Detected significant or public API changes',
+      reasoning:
+        'Fallback analysis: Detected significant or public API changes',
       suggestedUpdates: {
         readme: {
           shouldUpdate: hasPublicChanges,
@@ -424,14 +463,20 @@ Focus on:
   /**
    * Create fallback response for errors
    */
-  private createFallbackResponse(startTime: number): DocumentationUpdateResponse {
+  private createFallbackResponse(
+    startTime: number,
+  ): DocumentationUpdateResponse {
     return {
       shouldUpdate: false,
       confidence: 0,
       reasoning: 'Analysis failed due to system error',
       suggestedUpdates: {
         readme: { shouldUpdate: false, sections: [], priority: 'low' },
-        apiDocs: { shouldUpdate: false, affectedEndpoints: [], priority: 'low' },
+        apiDocs: {
+          shouldUpdate: false,
+          affectedEndpoints: [],
+          priority: 'low',
+        },
         changelog: { shouldUpdate: false, entryType: 'patch', priority: 'low' },
       },
       metadata: {
@@ -469,4 +514,4 @@ Always respond with valid JSON in the specified format.`;
   private getChangelogPrompt(): string {
     return 'Generate appropriate changelog entries for these changes.';
   }
-} 
+}

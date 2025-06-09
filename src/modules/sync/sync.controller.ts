@@ -11,7 +11,10 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { SyncService } from './sync.service';
-import { SyncResult, SyncProgress } from '../../common/interfaces/sync.interface';
+import {
+  SyncResult,
+  SyncProgress,
+} from '../../common/interfaces/sync.interface';
 import { SyncJob } from '../../common/entities/sync-job.entity';
 import { DocumentationUpdate } from '../../common/entities/documentation-update.entity';
 
@@ -33,7 +36,10 @@ export class SyncController {
     message: string;
   }> {
     try {
-      const result = await this.syncService.syncRepository(dto.repositoryId, dto.type);
+      const result = await this.syncService.syncRepository(
+        dto.repositoryId,
+        dto.type,
+      );
       return {
         jobId: result.jobId,
         message: 'Sync completed successfully',
@@ -52,11 +58,11 @@ export class SyncController {
   @Get('jobs/:jobId')
   async getSyncJob(@Param('jobId') jobId: string): Promise<SyncJob> {
     const job = await this.syncService.getSyncJob(jobId);
-    
+
     if (!job) {
       throw new HttpException('Sync job not found', HttpStatus.NOT_FOUND);
     }
-    
+
     return job;
   }
 
@@ -75,7 +81,9 @@ export class SyncController {
    * Get sync job progress
    */
   @Get('jobs/:jobId/progress')
-  async getSyncProgress(@Param('jobId') jobId: string): Promise<SyncProgress | null> {
+  async getSyncProgress(
+    @Param('jobId') jobId: string,
+  ): Promise<SyncProgress | null> {
     return this.syncService.getSyncProgress(jobId);
   }
 
@@ -118,7 +126,7 @@ export class SyncController {
       // This would trigger sync for all enabled repositories
       // For now, just trigger the daily sync method
       await this.syncService.runDailySync();
-      
+
       return {
         message: 'Daily sync triggered for all repositories',
         triggeredJobs: 0, // Would need to track actual number
@@ -161,7 +169,10 @@ export class SyncController {
     @Query('repositoryId') repositoryId?: string,
     @Query('priority') priority?: 'low' | 'medium' | 'high',
   ): Promise<DocumentationUpdate[]> {
-    return this.syncService.getPendingDocumentationUpdates(repositoryId, priority);
+    return this.syncService.getPendingDocumentationUpdates(
+      repositoryId,
+      priority,
+    );
   }
 
   /**
@@ -175,4 +186,4 @@ export class SyncController {
   ): Promise<DocumentationUpdate[]> {
     return this.syncService.getPendingDocumentationUpdates(repositoryId);
   }
-} 
+}

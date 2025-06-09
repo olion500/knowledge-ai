@@ -92,4 +92,4 @@ export interface DocumentSimilarityResponse {
   similarityScore: number; // 0-1, where 1 is identical
   reasoning: string;
   keyDifferences: string[];
-} 
+}

@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { parse, AST_NODE_TYPES, TSESTree } from '@typescript-eslint/typescript-estree';
+import {
+  parse,
+  AST_NODE_TYPES,
+  TSESTree,
+} from '@typescript-eslint/typescript-estree';
 import { createHash } from 'crypto';
 import {
   CodeAnalysisResult,
@@ -32,10 +36,10 @@ export class TypeScriptParser {
   async analyzeFile(
     filePath: string,
     sourceCode: string,
-    config?: Partial<ParserConfig>
+    config?: Partial<ParserConfig>,
   ): Promise<CodeAnalysisResult> {
     const parserConfig = this.buildParserConfig(config);
-    
+
     try {
       const ast = parse(sourceCode, {
         loc: true,
@@ -69,7 +73,7 @@ export class TypeScriptParser {
 
       this.traverseAST(ast, result, sourceCode);
       this.calculateComplexity(result);
-      
+
       return result;
     } catch (error) {
       this.logger.error(`Failed to parse ${filePath}:`, error);
@@ -89,7 +93,11 @@ export class TypeScriptParser {
     };
   }
 
-  private traverseAST(node: TSESTree.Node, result: CodeAnalysisResult, sourceCode: string): void {
+  private traverseAST(
+    node: TSESTree.Node,
+    result: CodeAnalysisResult,
+    sourceCode: string,
+  ): void {
     switch (node.type) {
       case AST_NODE_TYPES.FunctionDeclaration:
       case AST_NODE_TYPES.FunctionExpression:
@@ -128,7 +136,7 @@ export class TypeScriptParser {
     for (const [key, value] of Object.entries(node)) {
       if (value && typeof value === 'object') {
         if (Array.isArray(value)) {
-          value.forEach(child => {
+          value.forEach((child) => {
             if (child && typeof child === 'object' && 'type' in child) {
               this.traverseAST(child as TSESTree.Node, result, sourceCode);
             }
@@ -141,9 +149,12 @@ export class TypeScriptParser {
   }
 
   private extractFunctionInfo(
-    node: TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression,
+    node:
+      | TSESTree.FunctionDeclaration
+      | TSESTree.FunctionExpression
+      | TSESTree.ArrowFunctionExpression,
     sourceCode: string,
-    className?: string
+    className?: string,
   ): FunctionInfo {
     const name = this.getFunctionName(node);
     const parameters = this.extractParameters(node.params);
@@ -172,12 +183,18 @@ export class TypeScriptParser {
     };
   }
 
-  private extractMethodInfo(node: TSESTree.MethodDefinition, sourceCode: string): FunctionInfo {
+  private extractMethodInfo(
+    node: TSESTree.MethodDefinition,
+    sourceCode: string,
+  ): FunctionInfo {
     const className = this.getParentClassName(node);
     return this.extractFunctionInfo(node.value as any, sourceCode, className);
   }
 
-  private extractClassInfo(node: TSESTree.ClassDeclaration, sourceCode: string): ClassInfo {
+  private extractClassInfo(
+    node: TSESTree.ClassDeclaration,
+    sourceCode: string,
+  ): ClassInfo {
     const name = node.id?.name || 'AnonymousClass';
     const startLine = node.loc?.start.line || 0;
     const endLine = node.loc?.end.line || 0;
@@ -185,7 +202,7 @@ export class TypeScriptParser {
     const properties: PropertyInfo[] = [];
 
     // Extract methods and properties
-    node.body.body.forEach(member => {
+    node.body.body.forEach((member) => {
       if (member.type === AST_NODE_TYPES.MethodDefinition) {
         const method = this.extractMethodInfo(member, sourceCode);
         methods.push(method);
@@ -217,7 +234,7 @@ export class TypeScriptParser {
   }
 
   private extractParameters(params: TSESTree.Parameter[]): ParameterInfo[] {
-    return params.map(param => {
+    return params.map((param) => {
       const name = this.getParameterName(param);
       return {
         name,
@@ -243,13 +260,14 @@ export class TypeScriptParser {
   }
 
   private extractImportInfo(node: TSESTree.ImportDeclaration): ImportInfo {
-    const source = (node.source.value as string) || '';
-    const specifiers = node.specifiers?.map(spec => ({
-      name: this.getImportSpecifierName(spec),
-      alias: this.getImportSpecifierAlias(spec),
-      isDefault: spec.type === AST_NODE_TYPES.ImportDefaultSpecifier,
-      isNamespace: spec.type === AST_NODE_TYPES.ImportNamespaceSpecifier,
-    })) || [];
+    const source = node.source.value || '';
+    const specifiers =
+      node.specifiers?.map((spec) => ({
+        name: this.getImportSpecifierName(spec),
+        alias: this.getImportSpecifierAlias(spec),
+        isDefault: spec.type === AST_NODE_TYPES.ImportDefaultSpecifier,
+        isNamespace: spec.type === AST_NODE_TYPES.ImportNamespaceSpecifier,
+      })) || [];
 
     return {
       source,
@@ -259,7 +277,7 @@ export class TypeScriptParser {
   }
 
   private extractExportInfo(
-    node: TSESTree.ExportNamedDeclaration | TSESTree.ExportDefaultDeclaration
+    node: TSESTree.ExportNamedDeclaration | TSESTree.ExportDefaultDeclaration,
   ): ExportInfo | null {
     if (node.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
       return {
@@ -285,14 +303,20 @@ export class TypeScriptParser {
     return createHash('md5').update(content).digest('hex');
   }
 
-  private buildSignature(name: string, parameters: ParameterInfo[], node: any): string {
-    const params = parameters.map(p => {
-      let param = p.name;
-      if (p.type) param += `: ${p.type}`;
-      if (p.optional) param += '?';
-      if (p.defaultValue) param += ` = ${p.defaultValue}`;
-      return param;
-    }).join(', ');
+  private buildSignature(
+    name: string,
+    parameters: ParameterInfo[],
+    node: any,
+  ): string {
+    const params = parameters
+      .map((p) => {
+        let param = p.name;
+        if (p.type) param += `: ${p.type}`;
+        if (p.optional) param += '?';
+        if (p.defaultValue) param += ` = ${p.defaultValue}`;
+        return param;
+      })
+      .join(', ');
 
     let signature = `${name}(${params})`;
     const returnType = this.extractReturnType(node);
@@ -303,9 +327,12 @@ export class TypeScriptParser {
     return signature;
   }
 
-  private buildClassSignature(name: string, node: TSESTree.ClassDeclaration): string {
+  private buildClassSignature(
+    name: string,
+    node: TSESTree.ClassDeclaration,
+  ): string {
     let signature = `class ${name}`;
-    
+
     const superClass = this.extractSuperClass(node);
     if (superClass) {
       signature += ` extends ${superClass}`;
@@ -319,63 +346,105 @@ export class TypeScriptParser {
     return signature;
   }
 
-  private calculateFunctionComplexity(node: any, sourceCode: string): CodeComplexity {
+  private calculateFunctionComplexity(
+    node: any,
+    sourceCode: string,
+  ): CodeComplexity {
     // Simplified complexity calculation
     const lines = sourceCode.split('\n');
     const functionLines = lines.slice(
       (node.loc?.start.line || 1) - 1,
-      node.loc?.end.line || lines.length
+      node.loc?.end.line || lines.length,
     );
 
     return {
       cyclomaticComplexity: this.calculateCyclomaticComplexity(node),
       cognitiveComplexity: this.calculateCognitiveComplexity(node),
       linesOfCode: functionLines.length,
-      maintainabilityIndex: Math.max(0, 171 - 5.2 * Math.log(functionLines.length) - 0.23 * this.calculateCyclomaticComplexity(node)),
+      maintainabilityIndex: Math.max(
+        0,
+        171 -
+          5.2 * Math.log(functionLines.length) -
+          0.23 * this.calculateCyclomaticComplexity(node),
+      ),
     };
   }
 
-  private calculateClassComplexity(methods: FunctionInfo[], properties: PropertyInfo[]): CodeComplexity {
-    const avgMethodComplexity = methods.length > 0
-      ? methods.reduce((sum, m) => sum + m.complexity.cyclomaticComplexity, 0) / methods.length
-      : 0;
+  private calculateClassComplexity(
+    methods: FunctionInfo[],
+    properties: PropertyInfo[],
+  ): CodeComplexity {
+    const avgMethodComplexity =
+      methods.length > 0
+        ? methods.reduce(
+            (sum, m) => sum + m.complexity.cyclomaticComplexity,
+            0,
+          ) / methods.length
+        : 0;
 
-    const totalLOC = methods.reduce((sum, m) => sum + m.complexity.linesOfCode, 0);
+    const totalLOC = methods.reduce(
+      (sum, m) => sum + m.complexity.linesOfCode,
+      0,
+    );
 
     return {
       cyclomaticComplexity: Math.ceil(avgMethodComplexity),
-      cognitiveComplexity: methods.reduce((sum, m) => sum + m.complexity.cognitiveComplexity, 0),
+      cognitiveComplexity: methods.reduce(
+        (sum, m) => sum + m.complexity.cognitiveComplexity,
+        0,
+      ),
       linesOfCode: totalLOC,
-      maintainabilityIndex: Math.max(0, 171 - 5.2 * Math.log(Math.max(1, totalLOC)) - 0.23 * avgMethodComplexity),
+      maintainabilityIndex: Math.max(
+        0,
+        171 -
+          5.2 * Math.log(Math.max(1, totalLOC)) -
+          0.23 * avgMethodComplexity,
+      ),
     };
   }
 
   private calculateComplexity(result: CodeAnalysisResult): void {
-    const complexity = result.complexity as FileComplexity;
+    const complexity = result.complexity;
     complexity.totalFunctions = result.functions.length;
     complexity.totalClasses = result.classes.length;
-    
+
     if (result.functions.length > 0) {
-      complexity.averageFunctionComplexity = result.functions.reduce(
-        (sum, f) => sum + f.complexity.cyclomaticComplexity, 0
-      ) / result.functions.length;
+      complexity.averageFunctionComplexity =
+        result.functions.reduce(
+          (sum, f) => sum + f.complexity.cyclomaticComplexity,
+          0,
+        ) / result.functions.length;
     }
 
     if (result.classes.length > 0) {
-      complexity.averageClassComplexity = result.classes.reduce(
-        (sum, c) => sum + c.complexity.cyclomaticComplexity, 0
-      ) / result.classes.length;
+      complexity.averageClassComplexity =
+        result.classes.reduce(
+          (sum, c) => sum + c.complexity.cyclomaticComplexity,
+          0,
+        ) / result.classes.length;
     }
 
     complexity.cyclomaticComplexity = Math.max(
       1,
-      result.functions.reduce((sum, f) => sum + f.complexity.cyclomaticComplexity, 1) +
-      result.classes.reduce((sum, c) => sum + c.complexity.cyclomaticComplexity, 0)
+      result.functions.reduce(
+        (sum, f) => sum + f.complexity.cyclomaticComplexity,
+        1,
+      ) +
+        result.classes.reduce(
+          (sum, c) => sum + c.complexity.cyclomaticComplexity,
+          0,
+        ),
     );
 
-    complexity.cognitiveComplexity = result.functions.reduce(
-      (sum, f) => sum + f.complexity.cognitiveComplexity, 0
-    ) + result.classes.reduce((sum, c) => sum + c.complexity.cognitiveComplexity, 0);
+    complexity.cognitiveComplexity =
+      result.functions.reduce(
+        (sum, f) => sum + f.complexity.cognitiveComplexity,
+        0,
+      ) +
+      result.classes.reduce(
+        (sum, c) => sum + c.complexity.cognitiveComplexity,
+        0,
+      );
   }
 
   // Helper methods for extracting information from AST nodes
@@ -419,7 +488,9 @@ export class TypeScriptParser {
   }
 
   private extractDecorators(node: any): string[] {
-    return node.decorators?.map((d: any) => d.expression?.name || 'decorator') || [];
+    return (
+      node.decorators?.map((d: any) => d.expression?.name || 'decorator') || []
+    );
   }
 
   private extractModifiers(node: any): string[] {
@@ -441,39 +512,55 @@ export class TypeScriptParser {
     return undefined;
   }
 
-  private extractSuperClass(node: TSESTree.ClassDeclaration): string | undefined {
+  private extractSuperClass(
+    node: TSESTree.ClassDeclaration,
+  ): string | undefined {
     return (node.superClass as any)?.name;
   }
 
   private extractInterfaces(node: TSESTree.ClassDeclaration): string[] {
-    return (node as any).implements?.map((impl: any) => impl.expression?.name || 'interface') || [];
+    return (
+      (node as any).implements?.map(
+        (impl: any) => impl.expression?.name || 'interface',
+      ) || []
+    );
   }
 
   private getPropertyName(node: TSESTree.PropertyDefinition): string {
     return (node.key as any)?.name || 'unknown';
   }
 
-  private getPropertyType(node: TSESTree.PropertyDefinition): string | undefined {
+  private getPropertyType(
+    node: TSESTree.PropertyDefinition,
+  ): string | undefined {
     return (node as any).typeAnnotation?.typeAnnotation?.type;
   }
 
-  private getPropertyDefaultValue(node: TSESTree.PropertyDefinition): string | undefined {
+  private getPropertyDefaultValue(
+    node: TSESTree.PropertyDefinition,
+  ): string | undefined {
     return node.value ? 'default' : undefined;
   }
 
   private getImportSpecifierName(spec: TSESTree.ImportClause): string {
-    return (spec as any).imported?.name || (spec as any).local?.name || 'unknown';
+    return (
+      (spec as any).imported?.name || (spec as any).local?.name || 'unknown'
+    );
   }
 
-  private getImportSpecifierAlias(spec: TSESTree.ImportClause): string | undefined {
+  private getImportSpecifierAlias(
+    spec: TSESTree.ImportClause,
+  ): string | undefined {
     return (spec as any).local?.name !== (spec as any).imported?.name
       ? (spec as any).local?.name
       : undefined;
   }
 
-  private getExportType(declaration: any): 'function' | 'class' | 'variable' | 'type' | 'interface' {
+  private getExportType(
+    declaration: any,
+  ): 'function' | 'class' | 'variable' | 'type' | 'interface' {
     if (!declaration) return 'variable';
-    
+
     switch (declaration.type) {
       case AST_NODE_TYPES.FunctionDeclaration:
         return 'function';
@@ -495,11 +582,11 @@ export class TypeScriptParser {
   private calculateCyclomaticComplexity(node: any): number {
     // Simplified cyclomatic complexity calculation
     // In a real implementation, you'd count decision points
-    let complexity = 1;
-    
+    const complexity = 1;
+
     // This is a basic implementation - you'd want to traverse the AST
     // and count if statements, loops, switch cases, etc.
-    
+
     return complexity;
   }
 
@@ -508,4 +595,4 @@ export class TypeScriptParser {
     // In a real implementation, you'd implement the cognitive complexity algorithm
     return 0;
   }
-} 
+}

@@ -1,49 +1,81 @@
-import { IsString, IsBoolean, IsOptional, IsArray, IsObject, IsIn, IsUrl, ValidateNested, IsNotEmpty, Matches } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  IsObject,
+  IsIn,
+  IsUrl,
+  ValidateNested,
+  IsNotEmpty,
+  Matches,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RepositorySyncConfigDto {
-  @ApiPropertyOptional({ description: 'Enable sync for this repository', default: true })
+  @ApiPropertyOptional({
+    description: 'Enable sync for this repository',
+    default: true,
+  })
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
 
-  @ApiPropertyOptional({ description: 'Branch to sync (defaults to repository default branch)' })
+  @ApiPropertyOptional({
+    description: 'Branch to sync (defaults to repository default branch)',
+  })
   @IsOptional()
   @IsString()
   branch?: string;
 
-  @ApiPropertyOptional({ description: 'Paths to include in analysis (glob patterns)', type: [String] })
+  @ApiPropertyOptional({
+    description: 'Paths to include in analysis (glob patterns)',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   includePaths?: string[];
 
-  @ApiPropertyOptional({ description: 'Paths to exclude from analysis (glob patterns)', type: [String] })
+  @ApiPropertyOptional({
+    description: 'Paths to exclude from analysis (glob patterns)',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   excludePaths?: string[];
 
-  @ApiPropertyOptional({ description: 'File extensions to analyze', type: [String] })
+  @ApiPropertyOptional({
+    description: 'File extensions to analyze',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   fileExtensions?: string[];
 
-  @ApiPropertyOptional({ description: 'Sync frequency', enum: ['daily', 'weekly', 'manual'] })
+  @ApiPropertyOptional({
+    description: 'Sync frequency',
+    enum: ['daily', 'weekly', 'manual'],
+  })
   @IsOptional()
   @IsIn(['daily', 'weekly', 'manual'])
   syncFrequency?: 'daily' | 'weekly' | 'manual';
 
-  @ApiPropertyOptional({ description: 'Enable automatic documentation generation' })
+  @ApiPropertyOptional({
+    description: 'Enable automatic documentation generation',
+  })
   @IsOptional()
   @IsBoolean()
   autoDocGeneration?: boolean;
 }
 
 export class CreateRepositoryDto {
-  @ApiProperty({ description: 'Repository owner (GitHub username or organization)' })
+  @ApiProperty({
+    description: 'Repository owner (GitHub username or organization)',
+  })
   @IsString()
   @IsNotEmpty()
   owner: string;
@@ -160,7 +192,9 @@ export class RepositoryResponseDto {
 }
 
 export class SyncRepositoryDto {
-  @ApiPropertyOptional({ description: 'Force full sync regardless of last sync time' })
+  @ApiPropertyOptional({
+    description: 'Force full sync regardless of last sync time',
+  })
   @IsOptional()
   @IsBoolean()
   force?: boolean;
@@ -170,4 +204,4 @@ export class SyncRepositoryDto {
   @IsString()
   @Matches(/^[a-f0-9]{40}$/, { message: 'Invalid commit SHA format' })
   targetCommitSha?: string;
-} 
+}

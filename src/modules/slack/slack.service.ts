@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WebClient } from '@slack/web-api';
-import { SlackMessage, SlackChannel, SlackUser } from '../../common/interfaces/slack.interface';
+import {
+  SlackMessage,
+  SlackChannel,
+  SlackUser,
+} from '../../common/interfaces/slack.interface';
 
 @Injectable()
 export class SlackService {
@@ -20,12 +24,14 @@ export class SlackService {
         limit: 1000,
       });
 
-      return result.channels?.map(channel => ({
-        id: channel.id!,
-        name: channel.name!,
-        isPrivate: channel.is_private || false,
-        members: (channel as any).members,
-      })) || [];
+      return (
+        result.channels?.map((channel) => ({
+          id: channel.id!,
+          name: channel.name!,
+          isPrivate: channel.is_private || false,
+          members: (channel as any).members,
+        })) || []
+      );
     } catch (error) {
       this.logger.error('Failed to fetch channels', error);
       throw error;
@@ -56,12 +62,12 @@ export class SlackService {
             text: message.text,
             timestamp: message.ts!,
             threadTs: message.thread_ts,
-            reactions: message.reactions?.map(reaction => ({
+            reactions: message.reactions?.map((reaction) => ({
               name: reaction.name!,
               count: reaction.count!,
               users: reaction.users || [],
             })),
-            files: message.files?.map(file => ({
+            files: message.files?.map((file) => ({
               id: file.id!,
               name: file.name!,
               mimetype: file.mimetype!,
@@ -74,7 +80,10 @@ export class SlackService {
 
           // Get thread replies if this is a thread parent
           if (message.reply_count && message.reply_count > 0) {
-            const threadReplies = await this.getThreadReplies(channelId, message.ts!);
+            const threadReplies = await this.getThreadReplies(
+              channelId,
+              message.ts!,
+            );
             messages.push(...threadReplies);
           }
         }
@@ -82,40 +91,51 @@ export class SlackService {
 
       return messages;
     } catch (error) {
-      this.logger.error(`Failed to fetch channel history for ${channelId}`, error);
+      this.logger.error(
+        `Failed to fetch channel history for ${channelId}`,
+        error,
+      );
       throw error;
     }
   }
 
-  async getThreadReplies(channelId: string, threadTs: string): Promise<SlackMessage[]> {
+  async getThreadReplies(
+    channelId: string,
+    threadTs: string,
+  ): Promise<SlackMessage[]> {
     try {
       const result = await this.slackClient.conversations.replies({
         channel: channelId,
         ts: threadTs,
       });
 
-      return result.messages?.slice(1).map(message => ({
-        id: message.ts!,
-        channel: channelId,
-        user: message.user!,
-        text: message.text!,
-        timestamp: message.ts!,
-        threadTs: threadTs,
-        reactions: message.reactions?.map(reaction => ({
-          name: reaction.name!,
-          count: reaction.count!,
-          users: reaction.users || [],
-        })),
-        files: message.files?.map(file => ({
-          id: file.id!,
-          name: file.name!,
-          mimetype: file.mimetype!,
-          url: file.url_private!,
-          size: file.size!,
-        })),
-      })) || [];
+      return (
+        result.messages?.slice(1).map((message) => ({
+          id: message.ts!,
+          channel: channelId,
+          user: message.user!,
+          text: message.text!,
+          timestamp: message.ts!,
+          threadTs: threadTs,
+          reactions: message.reactions?.map((reaction) => ({
+            name: reaction.name!,
+            count: reaction.count!,
+            users: reaction.users || [],
+          })),
+          files: message.files?.map((file) => ({
+            id: file.id!,
+            name: file.name!,
+            mimetype: file.mimetype!,
+            url: file.url_private!,
+            size: file.size!,
+          })),
+        })) || []
+      );
     } catch (error) {
-      this.logger.error(`Failed to fetch thread replies for ${threadTs}`, error);
+      this.logger.error(
+        `Failed to fetch thread replies for ${threadTs}`,
+        error,
+      );
       throw error;
     }
   }
@@ -149,9 +169,9 @@ export class SlackService {
     oldest?: string,
   ): Promise<SlackMessage[]> {
     const messages = await this.getChannelHistory(channelId, oldest);
-    
-    return messages.filter(message => 
-      message.reactions?.some(reaction => reaction.name === reactionName)
+
+    return messages.filter((message) =>
+      message.reactions?.some((reaction) => reaction.name === reactionName),
     );
   }
 
@@ -161,11 +181,11 @@ export class SlackService {
     oldest?: string,
   ): Promise<SlackMessage[]> {
     const messages = await this.getChannelHistory(channelId, oldest);
-    
-    return messages.filter(message => 
-      keywords.some(keyword => 
-        message.text.toLowerCase().includes(keyword.toLowerCase())
-      )
+
+    return messages.filter((message) =>
+      keywords.some((keyword) =>
+        message.text.toLowerCase().includes(keyword.toLowerCase()),
+      ),
     );
   }
-} 
+}

@@ -44,9 +44,13 @@ describe('BaseEntity', () => {
 
     expect(entity.createdAt).toBeInstanceOf(Date);
     expect(entity.updatedAt).toBeInstanceOf(Date);
-    expect(entity.createdAt.getTime()).toBeGreaterThanOrEqual(beforeDate.getTime());
+    expect(entity.createdAt.getTime()).toBeGreaterThanOrEqual(
+      beforeDate.getTime(),
+    );
     expect(entity.createdAt.getTime()).toBeLessThanOrEqual(afterDate.getTime());
-    expect(entity.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeDate.getTime());
+    expect(entity.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      beforeDate.getTime(),
+    );
     expect(entity.updatedAt.getTime()).toBeLessThanOrEqual(afterDate.getTime());
   });
 
@@ -61,17 +65,22 @@ describe('BaseEntity', () => {
 
     expect(entity.createdAt).toEqual(initialDate); // Should not change
     expect(entity.updatedAt).toBeInstanceOf(Date);
-    expect(entity.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime());
-    expect(entity.updatedAt.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
+    expect(entity.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      beforeUpdate.getTime(),
+    );
+    expect(entity.updatedAt.getTime()).toBeLessThanOrEqual(
+      afterUpdate.getTime(),
+    );
     expect(entity.updatedAt.getTime()).toBeGreaterThan(initialDate.getTime());
   });
 
   it('should have UUID format for id when set', () => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
     // Simulate setting an ID (normally done by TypeORM)
     entity.id = '123e4567-e89b-12d3-a456-426614174000';
-    
+
     expect(entity.id).toMatch(uuidRegex);
   });
-}); 
+});

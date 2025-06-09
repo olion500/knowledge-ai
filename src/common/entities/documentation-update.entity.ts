@@ -148,7 +148,7 @@ export class DocumentationUpdate {
   get estimatedEffort(): 'small' | 'medium' | 'large' {
     const updates = this.analysisResult.suggestedUpdates;
     let updateCount = 0;
-    
+
     if (updates.readme?.shouldUpdate) updateCount++;
     if (updates.apiDocs?.shouldUpdate) updateCount++;
     if (updates.changelog?.shouldUpdate) updateCount++;
@@ -164,15 +164,15 @@ export class DocumentationUpdate {
     assignedTo?: string,
   ): void {
     this.status = status;
-    
+
     if (status === 'completed') {
       this.completedAt = new Date();
     }
-    
+
     if (notes) {
       this.completionNotes = notes;
     }
-    
+
     if (assignedTo) {
       this.assignedTo = assignedTo;
     }
@@ -180,9 +180,10 @@ export class DocumentationUpdate {
 
   setDueDate(priority?: 'low' | 'medium' | 'high'): void {
     const basePriority = priority || this.priority;
-    const daysToAdd = basePriority === 'high' ? 1 : basePriority === 'medium' ? 3 : 7;
-    
+    const daysToAdd =
+      basePriority === 'high' ? 1 : basePriority === 'medium' ? 3 : 7;
+
     this.dueDate = new Date();
     this.dueDate.setDate(this.dueDate.getDate() + daysToAdd);
   }
-} 
+}

@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LLMProvider, LLMProviderConfig } from '../../../common/interfaces/llm-provider.interface';
+import {
+  LLMProvider,
+  LLMProviderConfig,
+} from '../../../common/interfaces/llm-provider.interface';
 import { OpenAIProvider } from './openai.provider';
 import { OllamaProvider } from './ollama.provider';
 
@@ -12,16 +15,16 @@ export class LLMProviderFactory {
 
   createProvider(): LLMProvider {
     const config = this.getProviderConfig();
-    
+
     switch (config.type) {
       case 'openai':
         this.logger.log(`Creating OpenAI provider with model: ${config.model}`);
         return new OpenAIProvider(config);
-      
+
       case 'ollama':
         this.logger.log(`Creating Ollama provider with model: ${config.model}`);
         return new OllamaProvider(config);
-      
+
       default:
         throw new Error(`Unsupported LLM provider type: ${config.type}`);
     }
@@ -29,17 +32,25 @@ export class LLMProviderFactory {
 
   private getProviderConfig(): LLMProviderConfig {
     const type = this.configService.get<string>('LLM_PROVIDER') || 'openai';
-    
+
     if (type !== 'openai' && type !== 'ollama') {
-      throw new Error(`Invalid LLM provider type: ${type}. Must be 'openai' or 'ollama'`);
+      throw new Error(
+        `Invalid LLM provider type: ${type}. Must be 'openai' or 'ollama'`,
+      );
     }
 
     // Properly parse numeric values from environment variables
-    const maxTokens = this.parseNumber(this.configService.get<string>('LLM_MAX_TOKENS'), 4000);
-    const temperature = this.parseFloat(this.configService.get<string>('LLM_TEMPERATURE'), 0.3);
+    const maxTokens = this.parseNumber(
+      this.configService.get<string>('LLM_MAX_TOKENS'),
+      4000,
+    );
+    const temperature = this.parseFloat(
+      this.configService.get<string>('LLM_TEMPERATURE'),
+      0.3,
+    );
 
     const baseConfig = {
-      type: type as 'openai' | 'ollama',
+      type: type,
       maxTokens,
       temperature,
     };
@@ -49,14 +60,18 @@ export class LLMProviderFactory {
         ...baseConfig,
         apiKey: this.configService.get<string>('OPENAI_API_KEY'),
         baseUrl: this.configService.get<string>('OPENAI_BASE_URL'),
-        model: this.configService.get<string>('OPENAI_MODEL') || 'gpt-4-turbo-preview',
+        model:
+          this.configService.get<string>('OPENAI_MODEL') ||
+          'gpt-4-turbo-preview',
       };
     }
 
     if (type === 'ollama') {
       return {
         ...baseConfig,
-        baseUrl: this.configService.get<string>('OLLAMA_BASE_URL') || 'http://localhost:11434',
+        baseUrl:
+          this.configService.get<string>('OLLAMA_BASE_URL') ||
+          'http://localhost:11434',
         model: this.configService.get<string>('OLLAMA_MODEL') || 'llama2',
       };
     }
@@ -75,4 +90,4 @@ export class LLMProviderFactory {
     const parsed = parseFloat(value);
     return isNaN(parsed) ? defaultValue : parsed;
   }
-} 
+}
