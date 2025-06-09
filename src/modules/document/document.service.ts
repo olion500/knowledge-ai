@@ -7,10 +7,31 @@ import { SlackMessage } from '../../common/interfaces/slack.interface';
 import { JiraIssue } from '../../common/interfaces/jira.interface';
 import {
   SummaryRequest,
+  SummaryResponse,
   ClassificationRequest,
+  ClassificationResponse,
   DocumentGenerationRequest,
+  DocumentGenerationResponse,
   DocumentSimilarityRequest,
 } from '../../common/interfaces/llm.interface';
+
+interface SlackContext {
+  channel?: string;
+  participants: string[];
+  messageCount: number;
+}
+
+interface JiraContext {
+  project: string;
+  participants: string[];
+  issueType: string;
+  priority: string;
+  status: string;
+  components: string[];
+  labels: string[];
+}
+
+type ExtractionContext = SlackContext | JiraContext;
 
 @Injectable()
 export class DocumentService {
@@ -314,7 +335,7 @@ export class DocumentService {
   private async extractContext(
     content: SlackMessage[] | JiraIssue[],
     source: 'slack' | 'jira',
-  ): Promise<any> {
+  ): Promise<ExtractionContext> {
     if (source === 'slack') {
       const messages = content as SlackMessage[];
       const userIds = [...new Set(messages.map((msg) => msg.user))];
@@ -326,7 +347,7 @@ export class DocumentService {
         channel: messages[0]?.channel,
         participants,
         messageCount: messages.length,
-      };
+      } as SlackContext;
     } else {
       const issues = content as JiraIssue[];
       const issue = issues[0];
@@ -345,7 +366,7 @@ export class DocumentService {
         status: issue.status,
         components: issue.components.map((c) => c.name),
         labels: issue.labels,
-      };
+      } as JiraContext;
     }
   }
 
@@ -374,9 +395,9 @@ export class DocumentService {
   }
 
   private generatePRDescription(
-    document: any,
-    summary: any,
-    classification: any,
+    document: DocumentGenerationResponse,
+    summary: SummaryResponse,
+    classification: ClassificationResponse,
     source: string,
   ): string {
     return `

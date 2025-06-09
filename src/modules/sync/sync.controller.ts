@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Delete,
   Param,
   Query,
@@ -11,10 +10,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { SyncService } from './sync.service';
-import {
-  SyncResult,
-  SyncProgress,
-} from '../../common/interfaces/sync.interface';
+import { SyncProgress } from '../../common/interfaces/sync.interface';
 import { SyncJob } from '../../common/entities/sync-job.entity';
 import { DocumentationUpdate } from '../../common/entities/documentation-update.entity';
 
@@ -81,9 +77,7 @@ export class SyncController {
    * Get sync job progress
    */
   @Get('jobs/:jobId/progress')
-  async getSyncProgress(
-    @Param('jobId') jobId: string,
-  ): Promise<SyncProgress | null> {
+  getSyncProgress(@Param('jobId') jobId: string): Promise<SyncProgress | null> {
     return this.syncService.getSyncProgress(jobId);
   }
 
@@ -104,14 +98,13 @@ export class SyncController {
    * Get all active sync jobs
    */
   @Get('jobs')
-  async getAllSyncJobs(
+  getAllSyncJobs(
     @Query('status') status?: string,
     @Query('type') type?: string,
-    @Query('limit') limit: string = '50',
   ): Promise<SyncJob[]> {
     // This would require additional method in service
     // For now, returning empty array
-    return [];
+    return Promise.resolve([]);
   }
 
   /**
@@ -143,7 +136,7 @@ export class SyncController {
    * Get sync statistics
    */
   @Get('stats')
-  async getSyncStats(): Promise<{
+  getSyncStats(): Promise<{
     totalJobs: number;
     runningJobs: number;
     completedJobs: number;
@@ -152,13 +145,13 @@ export class SyncController {
   }> {
     // This would require additional service methods
     // For now, returning placeholder data
-    return {
+    return Promise.resolve({
       totalJobs: 0,
       runningJobs: 0,
       completedJobs: 0,
       failedJobs: 0,
       averageDuration: 0,
-    };
+    });
   }
 
   /**
@@ -182,7 +175,6 @@ export class SyncController {
   async getRepositoryDocumentationUpdates(
     @Param('repositoryId') repositoryId: string,
     @Query('status') status?: string,
-    @Query('limit') limit: string = '10',
   ): Promise<DocumentationUpdate[]> {
     return this.syncService.getPendingDocumentationUpdates(repositoryId);
   }

@@ -58,6 +58,7 @@ export class LLMProviderFactory {
     if (type === 'openai') {
       return {
         ...baseConfig,
+        type: 'openai' as const,
         apiKey: this.configService.get<string>('OPENAI_API_KEY'),
         baseUrl: this.configService.get<string>('OPENAI_BASE_URL'),
         model:
@@ -69,6 +70,7 @@ export class LLMProviderFactory {
     if (type === 'ollama') {
       return {
         ...baseConfig,
+        type: 'ollama' as const,
         baseUrl:
           this.configService.get<string>('OLLAMA_BASE_URL') ||
           'http://localhost:11434',
@@ -76,6 +78,7 @@ export class LLMProviderFactory {
       };
     }
 
+    // This should never be reached due to the type check above, but TypeScript requires it
     throw new Error(`Failed to create config for provider type: ${type}`);
   }
 

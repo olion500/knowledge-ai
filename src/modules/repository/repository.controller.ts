@@ -11,7 +11,6 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   ValidationPipe,
-  ParseBoolPipe,
 } from '@nestjs/common';
 import {
   ApiTags,

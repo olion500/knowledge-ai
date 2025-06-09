@@ -3,12 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
 import {
   GitHubRepository,
-  GitHubFile,
   GitHubPullRequest,
   GitHubContent,
   GitHubCreateFileRequest,
   GitHubUpdateFileRequest,
 } from '../../common/interfaces/github.interface';
+import {
+  RepositoryInfo,
+  GitHubCommitInfo,
+} from '../../common/interfaces/repository.interface';
 
 @Injectable()
 export class GitHubService {
@@ -69,7 +72,7 @@ export class GitHubService {
       }
 
       return data as GitHubContent;
-    } catch (error) {
+    } catch (error: any) {
       if (error.status === 404) {
         return null;
       }
@@ -184,7 +187,7 @@ export class GitHubService {
           this.logger.log(
             `Added reviewers to PR #${data.number}: ${pullRequest.reviewers.join(', ')}`,
           );
-        } catch (reviewerError) {
+        } catch (reviewerError: any) {
           this.logger.warn(
             `Failed to add reviewers to PR #${data.number}. Reviewers must be collaborators of the repository.`,
             {
@@ -207,7 +210,7 @@ export class GitHubService {
           this.logger.log(
             `Added assignees to PR #${data.number}: ${pullRequest.assignees.join(', ')}`,
           );
-        } catch (assigneeError) {
+        } catch (assigneeError: any) {
           this.logger.warn(
             `Failed to add assignees to PR #${data.number}. Assignees must be collaborators of the repository.`,
             {
@@ -230,7 +233,7 @@ export class GitHubService {
           this.logger.log(
             `Added labels to PR #${data.number}: ${pullRequest.labels.join(', ')}`,
           );
-        } catch (labelError) {
+        } catch (labelError: any) {
           this.logger.warn(`Failed to add labels to PR #${data.number}`, {
             requestedLabels: pullRequest.labels,
             error: labelError.message,
@@ -248,7 +251,7 @@ export class GitHubService {
     }
   }
 
-  async generateDocumentPath(topic: string, title: string): Promise<string> {
+  generateDocumentPath(topic: string, title: string): string {
     const basePath = this.configService.get<string>('DOCS_BASE_PATH') || 'docs';
     const sanitizedTopic = topic.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -273,7 +276,7 @@ export class GitHubService {
       }
 
       return data as GitHubContent[];
-    } catch (error) {
+    } catch (error: any) {
       if (error.status === 404) {
         return [];
       }
@@ -309,7 +312,10 @@ export class GitHubService {
   }
 
   // Repository 관련 메서드들 추가
-  async getRepositoryInfo(owner: string, name: string): Promise<any> {
+  async getRepositoryInfo(
+    owner: string,
+    name: string,
+  ): Promise<RepositoryInfo> {
     try {
       const { data } = await this.octokit.repos.get({
         owner,
@@ -349,7 +355,7 @@ export class GitHubService {
     owner: string,
     name: string,
     branch: string,
-  ): Promise<any> {
+  ): Promise<GitHubCommitInfo> {
     try {
       const { data } = await this.octokit.repos.getCommit({
         owner,

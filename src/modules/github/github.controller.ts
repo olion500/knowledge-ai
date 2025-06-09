@@ -8,6 +8,31 @@ import {
 } from '@nestjs/common';
 import { GitHubService } from './github.service';
 
+interface GitHubWebhookPayload {
+  repository?: {
+    full_name: string;
+  };
+  commits?: Array<{
+    message: string;
+    id: string;
+  }>;
+  action?: string;
+  pull_request?: {
+    title: string;
+    number: number;
+  };
+  issue?: {
+    title: string;
+    number: number;
+  };
+  comment?: {
+    body: string;
+  };
+  review?: {
+    state: string;
+  };
+}
+
 @Controller('github')
 export class GitHubController {
   private readonly logger = new Logger(GitHubController.name);
@@ -17,9 +42,8 @@ export class GitHubController {
   @Post('webhook')
   @HttpCode(200)
   async handleGitHubWebhook(
-    @Body() payload: any,
+    @Body() payload: GitHubWebhookPayload,
     @Headers('x-github-event') eventType: string,
-    @Headers('x-hub-signature-256') signature: string,
   ): Promise<{ message: string }> {
     this.logger.log(`Received GitHub webhook: ${eventType}`);
 
@@ -27,19 +51,19 @@ export class GitHubController {
       // Handle different GitHub events
       switch (eventType) {
         case 'push':
-          await this.handlePushEvent(payload);
+          this.handlePushEvent(payload);
           break;
         case 'pull_request':
-          await this.handlePullRequestEvent(payload);
+          this.handlePullRequestEvent(payload);
           break;
         case 'issues':
-          await this.handleIssuesEvent(payload);
+          this.handleIssuesEvent(payload);
           break;
         case 'issue_comment':
-          await this.handleIssueCommentEvent(payload);
+          this.handleIssueCommentEvent(payload);
           break;
         case 'pull_request_review':
-          await this.handlePullRequestReviewEvent(payload);
+          this.handlePullRequestReviewEvent(payload);
           break;
         default:
           this.logger.log(`Unhandled GitHub event: ${eventType}`);
@@ -61,10 +85,10 @@ export class GitHubController {
     };
   }
 
-  private async handlePushEvent(payload: any): Promise<void> {
+  private handlePushEvent(payload: GitHubWebhookPayload): void {
     const { repository, commits } = payload;
 
-    if (commits && commits.length > 0) {
+    if (commits && commits.length > 0 && repository) {
       this.logger.log(
         `Processing ${commits.length} commits to ${repository.full_name}`,
       );
@@ -72,11 +96,16 @@ export class GitHubController {
     }
   }
 
-  private async handlePullRequestEvent(payload: any): Promise<void> {
+  private handlePullRequestEvent(payload: GitHubWebhookPayload): void {
     const { action, pull_request, repository } = payload;
 
     // Process important PR events
-    if (['opened', 'closed', 'merged'].includes(action)) {
+    if (
+      action &&
+      ['opened', 'closed', 'merged'].includes(action) &&
+      pull_request &&
+      repository
+    ) {
       this.logger.log(
         `PR ${action}: ${pull_request.title} in ${repository.full_name}`,
       );
@@ -84,11 +113,16 @@ export class GitHubController {
     }
   }
 
-  private async handleIssuesEvent(payload: any): Promise<void> {
+  private handleIssuesEvent(payload: GitHubWebhookPayload): void {
     const { action, issue, repository } = payload;
 
     // Process important issue events
-    if (['opened', 'closed', 'labeled'].includes(action)) {
+    if (
+      action &&
+      ['opened', 'closed', 'labeled'].includes(action) &&
+      issue &&
+      repository
+    ) {
       this.logger.log(
         `Issue ${action}: ${issue.title} in ${repository.full_name}`,
       );
@@ -96,10 +130,10 @@ export class GitHubController {
     }
   }
 
-  private async handleIssueCommentEvent(payload: any): Promise<void> {
-    const { action, comment, issue, repository } = payload;
+  private handleIssueCommentEvent(payload: GitHubWebhookPayload): void {
+    const { action, issue, repository } = payload;
 
-    if (action === 'created') {
+    if (action === 'created' && issue && repository) {
       this.logger.log(
         `New comment on issue #${issue.number} in ${repository.full_name}`,
       );
@@ -107,10 +141,10 @@ export class GitHubController {
     }
   }
 
-  private async handlePullRequestReviewEvent(payload: any): Promise<void> {
-    const { action, review, pull_request, repository } = payload;
+  private handlePullRequestReviewEvent(payload: GitHubWebhookPayload): void {
+    const { action, pull_request, repository } = payload;
 
-    if (action === 'submitted') {
+    if (action === 'submitted' && pull_request && repository) {
       this.logger.log(
         `PR review submitted for #${pull_request.number} in ${repository.full_name}`,
       );

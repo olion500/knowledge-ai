@@ -6,11 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Repository as TypeOrmRepository,
-  FindOneOptions,
-  FindManyOptions,
-} from 'typeorm';
+import { Repository as TypeOrmRepository, FindManyOptions } from 'typeorm';
 import { Repository } from '../../common/entities/repository.entity';
 import { GitHubService } from '../github/github.service';
 import {
@@ -218,7 +214,7 @@ export class RepositoryService {
       );
 
       return this.toResponseDto(updatedRepository);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to sync repository ${repository.fullName}`,
         error,
@@ -263,7 +259,7 @@ export class RepositoryService {
         type: item.type,
         size: item.size,
       }));
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to get repository files for ${repository.fullName}`,
         error,
@@ -307,7 +303,7 @@ export class RepositoryService {
         language,
         size: fileContent.size,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to get file content for ${filePath} in ${repository.fullName}`,
         error,

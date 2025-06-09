@@ -3,8 +3,9 @@ import { SlackEventPayload } from '../../common/interfaces/slack.interface';
 
 @Injectable()
 export class SlackEventHandler {
-  async handleEvent(payload: SlackEventPayload): Promise<any> {
+  handleEvent(payload: SlackEventPayload): any {
     // Basic event handler - can be expanded later
-    return {};
+    // For now, just return the payload type for logging
+    return { eventType: payload.type };
   }
 }

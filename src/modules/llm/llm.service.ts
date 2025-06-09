@@ -3,8 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { LLMProvider } from '../../common/interfaces/llm-provider.interface';
 import { LLMProviderFactory } from './providers/llm-provider.factory';
 import {
-  LLMRequest,
-  LLMResponse,
   SummaryRequest,
   SummaryResponse,
   ClassificationRequest,
@@ -371,8 +369,6 @@ Context:
 - Participants: ${request.context.participants?.join(', ') || 'Unknown'}
 `
       : '';
-
-    const threshold = request.similarityThreshold || 0.7;
 
     return `
 You are an AI assistant that compares the semantic similarity between existing documentation and new content.

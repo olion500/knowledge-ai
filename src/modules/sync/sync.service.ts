@@ -95,7 +95,8 @@ export class SyncService {
       const result = await this.executeSyncJob(jobId);
       await this.completeSyncJob(jobId, result);
       return result;
-    } catch (error) {
+    } catch (error: any) {
+      this.logger.error(`Failed to sync repository ${repositoryId}`, error);
       await this.failSyncJob(jobId, error.message);
       throw error;
     }
@@ -247,7 +248,7 @@ export class SyncService {
               changeComparison,
               commits,
             );
-          } catch (error) {
+          } catch (error: any) {
             this.logger.warn(
               `Failed to analyze changes for documentation: ${error.message}`,
             );
@@ -507,10 +508,9 @@ export class SyncService {
             `(confidence: ${analysisResult.confidence}%)`,
         );
       }
-    } catch (error) {
-      this.logger.error(
+    } catch (error: any) {
+      this.logger.warn(
         `Failed to analyze changes for documentation: ${error.message}`,
-        error,
       );
     }
   }
@@ -636,7 +636,7 @@ export class SyncService {
         try {
           const result = await this.executeSyncJob(job.id);
           await this.completeSyncJob(job.id, result);
-        } catch (error) {
+        } catch (error: any) {
           await this.failSyncJob(job.id, error.message);
         }
       }

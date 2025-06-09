@@ -140,15 +140,15 @@ export class JiraService {
     return content;
   }
 
-  async getIssue(issueKey: string): Promise<JiraIssue | null> {
+  getIssue(issueKey: string): Promise<JiraIssue | null> {
     try {
       // This would make an actual API call to Jira
       // For now, we'll return null as this is primarily for webhook processing
       this.logger.log(`Getting Jira issue: ${issueKey}`);
-      return null;
+      return Promise.resolve(null);
     } catch (error) {
       this.logger.error(`Failed to get Jira issue ${issueKey}`, error);
-      return null;
+      return Promise.resolve(null);
     }
   }
 }
