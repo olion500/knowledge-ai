@@ -1,0 +1,52 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Knowledge AI Development Rules
+
+## Project Context
+AI-powered knowledge management: Slack/Jira → LLM Processing → GitHub Documentation
+**Stack**: NestJS + TypeScript + PostgreSQL + Redis + OpenAI/Ollama
+**Current Status**: Phase 1 Complete
+
+## Development Workflow
+
+### BEFORE Starting New Feature
+1. Read `docs/roadmap.md` to understand current phase
+2. Check `docs/features.md` for existing functionality  
+3. Review `docs/requirements.md` for constraints
+4. Consult `docs/project-structure.md` for patterns
+
+### DURING Development
+- Use TDD: Write tests first, then implementation
+- Follow TypeScript patterns from `docs/implementation.md`
+- Use NestJS module structure from `docs/project-structure.md`
+- Implement error handling and Result types
+- Add comprehensive logging for debugging and monitoring
+- Maintain 85%+ test coverage
+- Ensure TypeScript compilation and ESLint compliance
+- Avoid unnecessary comments - code should be self-documenting
+
+### AFTER Feature Completion
+
+**MANDATORY Documentation Updates:**
+
+**Always update:**
+- `README.md` - Development status, new features
+- `docs/roadmap.md` - Mark completed features, update status
+- `docs/features.md` - Add feature specs and business rules
+- `docs/requirements.md` - Update requirements if changed
+
+**Update if applicable:**
+- `docs/configuration.md` - New env vars, setup steps
+- `docs/implementation.md` - New patterns, testing strategies
+- `docs/project-structure.md` - New entities, module relationships
+- `docs/tech-stack.md` - New technologies, integrations
+
+## Quality Standards
+- All features must have corresponding documentation
+- Code examples in docs must be tested
+- Keep roadmap.md and README.md status in sync
+
+Documentation is code. Treat it with the same quality standards.
