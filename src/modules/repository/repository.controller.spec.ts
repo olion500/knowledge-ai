@@ -21,16 +21,9 @@ describe('RepositoryController', () => {
     description:
       'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
     language: 'JavaScript',
-    lastCommitSha: 'abc123',
-    lastSyncedAt: new Date('2024-01-01T00:00:00Z'),
+
     active: true,
     isPrivate: false,
-    syncConfig: {
-      syncFrequency: 'daily',
-      autoDocGeneration: true,
-      fileExtensions: ['.ts', '.js'],
-      excludePaths: ['node_modules/**'],
-    },
     metadata: {
       stars: 12345,
       forks: 6789,
@@ -210,7 +203,7 @@ describe('RepositoryController', () => {
 
     it('should sync repository', async () => {
       const repositoryId = '123e4567-e89b-12d3-a456-426614174000';
-      const syncedRepo = { ...mockRepositoryResponse, lastCommitSha: 'xyz789' };
+      const syncedRepo = { ...mockRepositoryResponse };
       repositoryService.syncRepository.mockResolvedValue(syncedRepo);
 
       const result = await controller.syncRepository(repositoryId, syncDto);
@@ -219,7 +212,7 @@ describe('RepositoryController', () => {
         repositoryId,
         syncDto,
       );
-      expect(result.lastCommitSha).toBe('xyz789');
+
     });
 
     it('should sync without dto', async () => {

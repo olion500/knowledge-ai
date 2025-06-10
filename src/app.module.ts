@@ -19,7 +19,7 @@ import { DocumentModule } from './modules/document/document.module';
 import { RepositoryModule } from './modules/repository/repository.module';
 import { CodeAnalysisModule } from './modules/code-analysis/code-analysis.module';
 import { CodeTrackingModule } from './modules/code-tracking/code-tracking.module';
-import { SyncModule } from './modules/sync/sync.module';
+
 
 @Module({
   imports: [
@@ -57,7 +57,6 @@ import { SyncModule } from './modules/sync/sync.module';
     RepositoryModule,
     CodeAnalysisModule,
     CodeTrackingModule,
-    SyncModule,
   ],
   controllers: [AppController],
   providers: [AppService],

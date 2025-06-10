@@ -66,7 +66,6 @@ src/
 - githubPrUrl: string
 - githubCommitSha: string
 - published: boolean
-- lastSyncedAt: timestamp
 ```
 
 **CodeReference Entity** (`src/common/entities/code-reference.entity.ts`)

@@ -327,8 +327,8 @@ export class GitHubService {
         name: data.name,
         fullName: data.full_name,
         defaultBranch: data.default_branch,
-        description: data.description,
-        language: data.language,
+        description: data.description || undefined,
+        language: data.language || undefined,
         isPrivate: data.private,
         metadata: {
           stars: data.stargazers_count,
@@ -372,13 +372,11 @@ export class GitHubService {
           date: data.commit.author?.date || new Date().toISOString(),
         },
         url: data.html_url,
-        stats: data.stats
-          ? {
-              additions: data.stats.additions,
-              deletions: data.stats.deletions,
-              total: data.stats.total,
-            }
-          : undefined,
+        stats: data.stats ? {
+          additions: data.stats.additions || 0,
+          deletions: data.stats.deletions || 0,
+          total: data.stats.total || 0,
+        } : undefined,
       };
     } catch (error) {
       this.logger.error(

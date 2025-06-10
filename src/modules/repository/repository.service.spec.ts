@@ -29,7 +29,7 @@ describe('RepositoryService', () => {
     description:
       'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
     language: 'JavaScript',
-    lastCommitSha: 'abc123',
+
     lastSyncedAt: new Date('2024-01-01T00:00:00Z'),
     active: true,
     isPrivate: false,
@@ -298,7 +298,7 @@ describe('RepositoryService', () => {
     };
 
     it('should sync repository successfully', async () => {
-      const syncedRepo = { ...mockRepository, lastCommitSha: 'xyz789' };
+      const syncedRepo = { ...mockRepository };
       repository.findOne.mockResolvedValue(mockRepository);
       githubService.getRepositoryInfo.mockResolvedValue(mockGitHubRepoInfo);
       githubService.getLatestCommit.mockResolvedValue(mockCommitInfo);
@@ -316,25 +316,24 @@ describe('RepositoryService', () => {
         'main',
       );
       expect(repository.save).toHaveBeenCalled();
-      expect(result.lastCommitSha).toBe('xyz789');
     });
 
-    it('should skip sync when already up to date and not forced', async () => {
-      const upToDateRepo = { ...mockRepository, lastCommitSha: 'xyz789' };
+    it('should sync repository successfully without force', async () => {
+      const upToDateRepo = { ...mockRepository };
       repository.findOne.mockResolvedValue(upToDateRepo);
       githubService.getRepositoryInfo.mockResolvedValue(mockGitHubRepoInfo);
       githubService.getLatestCommit.mockResolvedValue(mockCommitInfo);
+      repository.save.mockResolvedValue(upToDateRepo);
 
       const result = await service.syncRepository(mockRepository.id, {
         force: false,
       });
 
-      expect(repository.save).not.toHaveBeenCalled();
-      expect(result.lastCommitSha).toBe('xyz789');
+      expect(repository.save).toHaveBeenCalled();
     });
 
     it('should force sync when requested', async () => {
-      const upToDateRepo = { ...mockRepository, lastCommitSha: 'xyz789' };
+      const upToDateRepo = { ...mockRepository };
       repository.findOne.mockResolvedValue(upToDateRepo);
       githubService.getRepositoryInfo.mockResolvedValue(mockGitHubRepoInfo);
       githubService.getLatestCommit.mockResolvedValue(mockCommitInfo);
@@ -365,7 +364,7 @@ describe('RepositoryService', () => {
 
       expect(repository.find).toHaveBeenCalledWith({
         where: { active: true },
-        order: { lastSyncedAt: 'ASC' },
+        order: { updatedAt: 'ASC' },
       });
       expect(result).toHaveLength(1);
     });

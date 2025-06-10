@@ -33,7 +33,7 @@ export class RepositoryService {
   async create(
     createRepositoryDto: CreateRepositoryDto,
   ): Promise<RepositoryResponseDto> {
-    const { owner, name, description, defaultBranch, syncConfig } =
+    const { owner, name, description, defaultBranch } =
       createRepositoryDto;
     const fullName = `${owner}/${name}`;
 
@@ -70,21 +70,7 @@ export class RepositoryService {
       language: repoInfo.language,
       isPrivate: repoInfo.isPrivate,
       metadata: repoInfo.metadata,
-      syncConfig: syncConfig || {
-        syncFrequency: 'daily',
-        autoDocGeneration: true,
-        fileExtensions: [
-          '.ts',
-          '.js',
-          '.py',
-          '.java',
-          '.cpp',
-          '.c',
-          '.go',
-          '.rs',
-        ],
-        excludePaths: ['node_modules/**', '.git/**', 'dist/**', 'build/**'],
-      },
+
       active: true,
     });
 
@@ -192,25 +178,15 @@ export class RepositoryService {
         repository.defaultBranch,
       );
 
-      // 강제 동기화가 아니고 이미 최신이면 스킵
-      if (!syncDto?.force && repository.lastCommitSha === latestCommit.sha) {
-        this.logger.log(
-          `Repository ${repository.fullName} is already up to date`,
-        );
-        return this.toResponseDto(repository);
-      }
-
       // 리포지토리 정보 업데이트
       repository.description = repoInfo.description;
       repository.language = repoInfo.language;
       repository.metadata = repoInfo.metadata;
-      repository.lastCommitSha = syncDto?.targetCommitSha || latestCommit.sha;
-      repository.lastSyncedAt = new Date();
 
       const updatedRepository =
         await this.repositoryRepository.save(repository);
       this.logger.log(
-        `Repository ${repository.fullName} synced to commit ${repository.lastCommitSha}`,
+        `Repository ${repository.fullName} synced`,
       );
 
       return this.toResponseDto(updatedRepository);
@@ -228,7 +204,7 @@ export class RepositoryService {
   async getActiveRepositories(): Promise<Repository[]> {
     return this.repositoryRepository.find({
       where: { active: true },
-      order: { lastSyncedAt: 'ASC' }, // 가장 오래된 것부터
+      order: { updatedAt: 'ASC' }, // 가장 오래된 것부터
     });
   }
 
@@ -360,11 +336,8 @@ export class RepositoryService {
       defaultBranch: repository.defaultBranch,
       description: repository.description,
       language: repository.language,
-      lastCommitSha: repository.lastCommitSha,
-      lastSyncedAt: repository.lastSyncedAt,
       active: repository.active,
       isPrivate: repository.isPrivate,
-      syncConfig: repository.syncConfig,
       metadata: repository.metadata,
       htmlUrl: repository.htmlUrl,
       createdAt: repository.createdAt,

@@ -63,7 +63,6 @@ export class CodeTrackingService {
             startLine: extractedCode.startLine,
             endLine: extractedCode.endLine,
             content: extractedCode.content,
-            lastCommitSha: extractedCode.sha,
             isActive: true,
           };
         } else {
@@ -84,7 +83,6 @@ export class CodeTrackingService {
             startLine: codeLink.startLine,
             endLine: codeLink.endLine,
             content: extractedCode.content,
-            lastCommitSha: extractedCode.sha,
             isActive: true,
           };
         }

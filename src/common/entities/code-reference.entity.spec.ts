@@ -15,7 +15,7 @@ describe('CodeReference Entity', () => {
       codeReference.filePath = 'src/test.ts';
       codeReference.referenceType = 'line';
       codeReference.startLine = 10;
-      codeReference.lastCommitSha = 'abc123';
+  
       codeReference.content = 'console.log("test");';
       codeReference.hash = 'hash123';
       codeReference.isActive = true;

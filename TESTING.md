@@ -1,6 +1,6 @@
-# Testing Guide for Knowledge Sync AI
+# Testing Guide for Knowledge AI
 
-This document provides comprehensive information about testing in the Knowledge Sync AI project.
+This document provides comprehensive information about testing in the Knowledge AI project.
 
 ## 📋 Overview
 
@@ -452,4 +452,4 @@ describe('ServiceName', () => {
 });
 ```
 
-This testing guide ensures comprehensive coverage and maintainable test suites for the Knowledge Sync AI project. 
+This testing guide ensures comprehensive coverage and maintainable test suites for the Knowledge AI project. 

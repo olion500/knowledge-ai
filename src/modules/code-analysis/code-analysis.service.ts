@@ -44,7 +44,7 @@ export class CodeAnalysisService {
 
     try {
       const repository = await this.repositoryService.findOne(repositoryId);
-      const targetCommitSha = commitSha || repository.lastCommitSha;
+      const targetCommitSha = commitSha || repository.defaultBranch || 'main';
 
       if (!targetCommitSha) {
         throw new Error('No commit SHA available for analysis');
@@ -233,7 +233,7 @@ export class CodeAnalysisService {
     };
   }> {
     const repository = await this.repositoryService.findOne(repositoryId);
-    const targetCommitSha = commitSha || repository.lastCommitSha;
+    const targetCommitSha = commitSha;
 
     const structures = await this.codeStructureRepository.find({
       where: { repositoryId, commitSha: targetCommitSha },

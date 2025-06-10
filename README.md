@@ -1,10 +1,10 @@
-# Knowledge Sync AI
+# Knowledge AI
 
 AI-powered knowledge management system that collects data from Slack and Jira, processes it with LLM, and generates markdown documentation in GitHub.
 
 ## 🎯 Overview
 
-Knowledge Sync AI automatically:
+Knowledge AI automatically:
 - 📥 Collects important conversations from Slack and Jira issues
 - 🧠 Processes content using GPT-4 for summarization and classification
 - 📝 Generates structured markdown documentation
@@ -22,8 +22,8 @@ Knowledge Sync AI automatically:
        └──────────────────┼──────────────────┘
                           │
                 ┌─────────▼─────────┐
-                │  Knowledge Sync   │
-                │       AI          │
+                │   Knowledge AI    │
+                │                   │
                 └─────────┬─────────┘
                           │
                 ┌─────────▼─────────┐
@@ -226,7 +226,7 @@ Use **Fine-grained Personal Access Tokens** for better security with minimal req
 1. Go to GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens**
 2. Click **Generate new token**
 3. Configure:
-   - **Token name**: `Knowledge Sync AI`
+   - **Token name**: `Knowledge AI`
    - **Expiration**: Set appropriate expiration (e.g., 90 days)
    - **Repository access**: Select your documentation repository
    - **Permissions** (Repository level):
@@ -347,7 +347,7 @@ The system classifies content into these predefined topics:
 
 ## 🧪 Testing
 
-Knowledge Sync AI includes comprehensive unit and integration tests to ensure reliability and maintainability.
+Knowledge AI includes comprehensive unit and integration tests to ensure reliability and maintainability.
 
 ### Running Tests
 
@@ -519,10 +519,10 @@ describe('AppController (e2e)', () => {
 
 ```bash
 # Build image
-docker build -t knowledge-sync-ai .
+docker build -t knowledge-ai .
 
 # Run container
-docker run -p 3000:3000 --env-file .env knowledge-sync-ai
+docker run -p 3000:3000 --env-file .env knowledge-ai
 ```
 
 ## 📊 Monitoring

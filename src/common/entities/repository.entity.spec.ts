@@ -58,13 +58,9 @@ describe('Repository Entity', () => {
     it('should handle nullable properties', () => {
       repository.description = undefined;
       repository.language = undefined;
-      repository.lastCommitSha = undefined;
-      repository.lastSyncedAt = undefined;
 
       expect(repository.description).toBeUndefined();
       expect(repository.language).toBeUndefined();
-      expect(repository.lastCommitSha).toBeUndefined();
-      expect(repository.lastSyncedAt).toBeUndefined();
     });
 
     it('should set default values correctly', () => {
@@ -79,26 +75,7 @@ describe('Repository Entity', () => {
     });
   });
 
-  describe('sync configuration', () => {
-    it('should handle sync configuration object', () => {
-      const syncConfig = {
-        includePaths: ['src/**', 'lib/**'],
-        excludePaths: ['node_modules/**', '.git/**'],
-        fileExtensions: ['.ts', '.js', '.py'],
-        syncFrequency: 'daily' as const,
-        autoDocGeneration: true,
-      };
 
-      repository.syncConfig = syncConfig;
-
-      expect(repository.syncConfig).toEqual(syncConfig);
-      expect(repository.syncConfig?.syncFrequency).toBe('daily');
-      expect(repository.syncConfig?.autoDocGeneration).toBe(true);
-      expect(repository.syncConfig?.includePaths).toHaveLength(2);
-      expect(repository.syncConfig?.excludePaths).toHaveLength(2);
-      expect(repository.syncConfig?.fileExtensions).toHaveLength(3);
-    });
-  });
 
   describe('metadata', () => {
     it('should handle repository metadata', () => {

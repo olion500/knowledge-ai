@@ -21,12 +21,7 @@ describe('CodeAnalysisService', () => {
     id: 'repo-123',
     owner: 'testowner',
     name: 'testrepo',
-    lastCommitSha: 'commit123',
-    syncConfig: {
-      enabled: true,
-      branch: 'main',
-      syncInterval: 'daily',
-    },
+    defaultBranch: 'main',
   };
 
   const mockFileContent: GitHubContent = {
@@ -196,7 +191,7 @@ describe('CodeAnalysisService', () => {
       expect(githubService.getRepositoryContents).toHaveBeenCalledWith(
         'testowner',
         'testrepo',
-        'commit123',
+        'main',
       );
       expect(typescriptParser.analyzeFile).toHaveBeenCalledTimes(2);
     });
@@ -220,13 +215,20 @@ describe('CodeAnalysisService', () => {
       expect(result.errors[0]).toContain('Parse error');
     });
 
-    it('should throw error when no commit SHA available', async () => {
-      const repoWithoutCommit = { ...mockRepository, lastCommitSha: null };
+    it('should use default branch when no commit SHA provided', async () => {
+      const repoWithoutCommit = { ...mockRepository };
       repositoryService.findOne.mockResolvedValue(repoWithoutCommit as any);
+      githubService.getRepositoryContents.mockResolvedValue([]);
+      codeStructureRepository.find.mockResolvedValue([]);
 
-      await expect(service.analyzeRepository('repo-123')).rejects.toThrow(
-        'No commit SHA available for analysis',
+      const result = await service.analyzeRepository('repo-123');
+      
+      expect(githubService.getRepositoryContents).toHaveBeenCalledWith(
+        'testowner',
+        'testrepo',
+        'main',
       );
+      expect(result.totalFiles).toBe(0);
     });
   });
 
@@ -646,6 +648,11 @@ describe('CodeAnalysisService', () => {
 
       const result = await service.analyzeRepository('repo-123');
 
+      expect(githubService.getRepositoryContents).toHaveBeenCalledWith(
+        'testowner',
+        'testrepo',
+        'main',
+      );
       // Should only analyze .ts, .js, .py files (3 files), but parser only handles ts/js
       expect(result.totalFiles).toBe(3);
       expect(result.analyzedFiles).toBe(2); // Only ts and js files succeed

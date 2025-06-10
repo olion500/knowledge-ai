@@ -57,10 +57,7 @@ export class CodeReference {
   @IsString()
   functionName?: string;
 
-  @Column()
-  @IsNotEmpty()
-  @IsString()
-  lastCommitSha: string;
+
 
   @Column('text')
   @IsNotEmpty()
@@ -113,5 +110,29 @@ export class CodeReference {
   validateHash(): boolean {
     const currentHash = createHash('sha256').update(this.content).digest('hex');
     return this.hash === currentHash;
+  }
+
+  markAsDeleted(): void {
+    this.isActive = false;
+  }
+
+  updateLineNumbers(startLine: number, endLine?: number): void {
+    this.startLine = startLine;
+    if (endLine !== undefined) {
+      this.endLine = endLine;
+    }
+  }
+
+  updateContent(content: string, contentHash?: string): void {
+    this.content = content;
+    if (contentHash) {
+      this.hash = contentHash;
+    } else {
+      this.generateHash();
+    }
+  }
+
+  get contentHash(): string {
+    return this.hash;
   }
 }

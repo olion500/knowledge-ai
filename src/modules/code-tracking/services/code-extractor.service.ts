@@ -207,4 +207,15 @@ export class CodeExtractorService {
 
     return null;
   }
+
+  async getFileContent(repository: string, filePath: string): Promise<string> {
+    const [owner, repo] = repository.split('/');
+    const fileContent = await this.gitHubService.getFileContent(filePath);
+
+    if (!fileContent) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+
+    return Buffer.from(fileContent.content || '', 'base64').toString('utf-8');
+  }
 }

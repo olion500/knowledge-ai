@@ -116,7 +116,7 @@ describe('CodeTrackingService', () => {
         endLine: 15,
         content: 'function test() {\n  return true;\n}',
         hash: 'hash123',
-        lastCommitSha: 'abc123',
+  
         isActive: true,
         generateHash: jest.fn(),
       };
