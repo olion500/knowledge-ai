@@ -1,251 +1,143 @@
 # Knowledge AI
 
-AI-powered knowledge management system that collects data from Slack and Jira, processes it with LLM, and generates markdown documentation in GitHub.
+> AI-powered knowledge management system that transforms team conversations into structured documentation
 
-## 🎯 Overview
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-5.0-blue.svg)](https://www.typescriptlang.org/)
 
-Knowledge AI automatically:
-- 📥 Collects important conversations from Slack and Jira issues
-- 🧠 Processes content using GPT-4 for summarization and classification
-- 📝 Generates structured markdown documentation
-- 🔄 Creates GitHub Pull Requests for team review
-- 🗂️ Organizes documents by topic/product rather than chronologically
+## 🎯 What is Knowledge AI?
 
-## 🏗️ Architecture
+Knowledge AI automatically captures important conversations from **Slack** and **Jira**, processes them with advanced AI, and generates **structured documentation** directly in your GitHub repository.
 
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│    Slack    │    │    Jira     │    │   GitHub    │
-│   Events    │    │  Webhooks   │    │     API     │
-└──────┬──────┘    └──────┬──────┘    └──────┬──────┘
-       │                  │                  │
-       └──────────────────┼──────────────────┘
-                          │
-                ┌─────────▼─────────┐
-                │   Knowledge AI    │
-                │                   │
-                └─────────┬─────────┘
-                          │
-                ┌─────────▼─────────┐
-                │     GPT-4         │
-                │   Processing      │
-                └─────────┬─────────┘
-                          │
-                ┌─────────▼─────────┐
-                │   Markdown Docs   │
-                │   + GitHub PR     │
-                └───────────────────┘
+### ✨ Key Benefits
+
+- 🧠 **AI-Powered**: Uses GPT-4 to extract key insights, decisions, and action items
+- 🔄 **Automated Workflow**: From conversation to documentation with zero manual effort  
+- 📝 **Structured Output**: Consistent markdown documents organized by topic
+- 🔗 **Code Integration**: Links discussions to actual code with smart GitHub integration
+- 👥 **Team Collaboration**: Creates GitHub PRs for review and approval
+
+### 🚀 How It Works
+
+```mermaid
+graph LR
+    A[Slack Reactions 📝] --> B[AI Processing]
+    C[Jira Updates] --> B
+    B --> D[Generate Docs]
+    D --> E[GitHub PR]
+    E --> F[Team Review]
 ```
 
-## 🚀 Features
+1. **Capture**: Team marks important messages with reactions (📝,📋,🔖) or keywords
+2. **Process**: AI extracts key information, decisions, and action items
+3. **Generate**: Creates structured markdown documentation
+4. **Review**: Automatically creates GitHub PRs for team approval
+5. **Organize**: Documents are grouped by topic, not chronologically
 
-### Data Collection
-- **Slack Integration**: Monitors channels for specific reactions (📝, 📋, 🔖) or keywords
-- **Jira Integration**: Processes issue updates and comments via webhooks
-- **Smart Filtering**: Only processes content marked as important
+## 🏗️ Architecture Overview
 
-### Code Tracking & Linking (Phase 1)
-- **GitHub Link Parsing**: Automatically detects GitHub links in documents with various formats:
-  - Single line: `[코드 예시](github://owner/repo/src/file.ts:15)`
-  - Line range: `[코드 범위](github://owner/repo/src/file.ts:15-20)`
-  - Function: `[함수 설명](github://owner/repo/src/file.ts#functionName)`
-  - Class method: `[클래스 메서드](github://owner/repo/src/file.ts#Class.method)`
-- **Code Extraction**: Automatically extracts code snippets from GitHub repositories
-- **Document Enhancement**: Replaces GitHub links with embedded code snippets
-- **Change Tracking**: Monitors code changes through content hashing
-- **API Endpoints**: RESTful APIs for code reference management
+Knowledge AI is built with modern, scalable technologies:
 
-### AI Processing
-- **Summarization**: Extracts key points, decisions, and action items
-- **Classification**: Categorizes content into predefined topics
-- **Context Awareness**: Maintains conversation context and participant information
+- **Backend**: NestJS + TypeScript
+- **Database**: PostgreSQL + Redis
+- **AI**: OpenAI GPT-4 / Local Ollama
+- **Integrations**: Slack, Jira, GitHub APIs
+- **Queue**: Bull for async processing
 
-### Document Generation
-- **Structured Markdown**: Consistent formatting with metadata
-- **Topic-based Organization**: Groups by product/feature rather than date
-- **Update Detection**: Merges new information with existing documents
-
-### GitHub Integration
-- **Automated PRs**: Creates pull requests with generated documentation
-- **Review Workflow**: Assigns reviewers and adds appropriate labels
-- **Branch Management**: Creates feature branches for each update
+> 📚 For detailed architecture information, see [docs/project-structure.md](./docs/project-structure.md)
 
 ## 📋 Prerequisites
 
-- Node.js 18+
-- PostgreSQL 12+
-- Redis 6+
-- Slack App with Bot Token
-- Jira API Access
-- GitHub Personal Access Token
-- OpenAI API Key
-
-## 🛠️ Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd knowledge-ai
-   ```
-
-2. **Install dependencies** (includes localtunnel for development)
-   ```bash
-   make install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp env.template .env
-   ```
-   
-   Then edit `.env` with your specific configuration values.
-
-4. **Set up the database**
-   ```bash
-   pnpm run build
-   pnpm run start:prod
-   ```
+- **Node.js** 20+ 
+- **PostgreSQL** 12+
+- **Redis** 6+
+- **API Keys**: Slack Bot Token, GitHub Token, OpenAI API Key (or local Ollama)
+- **Access**: Jira instance (if using Jira integration)
 
 ## 🚀 Quick Start
 
-For **local development** with Slack webhook testing:
+### 1. Installation
 
 ```bash
-# Start development server with automatic tunnel setup
+# Clone repository
+git clone <your-repo-url>
+cd knowledge-ai
+
+# Install dependencies (includes development tools)
+make install
+```
+
+### 2. Configuration
+
+```bash
+# Copy environment template
+cp env.template .env
+
+# Edit configuration
+nano .env
+```
+
+Required environment variables:
+- `SLACK_BOT_TOKEN` - Your Slack bot token
+- `GITHUB_TOKEN` - GitHub personal access token  
+- `OPENAI_API_KEY` - OpenAI API key (or setup Ollama for local AI)
+- Database and Redis connection strings
+
+> 🔧 For complete configuration guide, see [docs/configuration.md](./docs/configuration.md)
+
+### 3. Development Setup
+
+```bash
+# Start development environment with webhook tunneling
 make dev
 ```
 
-This command will:
-- 🚇 Start localtunnel to expose your local server
-- 📋 Display the webhook URL for Slack configuration
-- 🔥 Start the NestJS server with live reload
-- 📊 Show real-time server logs
+This command:
+- 🚇 Creates secure tunnel for webhook testing  
+- 📋 Displays webhook URLs for Slack/Jira setup
+- 🔥 Starts server with live reload
+- 📊 Shows real-time logs
 
 **Example output:**
 ```
 🚀 Starting development environment...
-Starting localtunnel...
 ✅ Tunnel ready!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 SLACK CONFIGURATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 SLACK CONFIGURATION  
 🌐 Tunnel URL: https://abc123.loca.lt
 📝 Event Subscription URL: https://abc123.loca.lt/slack/events
-🔗 Slack API: https://api.slack.com/apps
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Starting NestJS server... (Ctrl+C to stop all services)
-
-[Server logs appear here...]
 ```
 
-### 🛠️ Development Commands
+### 4. Configure Integrations
 
-```bash
-# Install dependencies and tools
-make install
+#### Slack Setup
+1. Create Slack app at [api.slack.com/apps](https://api.slack.com/apps)
+2. Enable Event Subscriptions with the tunnel URL from `make dev`
+3. Add bot scopes: `channels:history`, `channels:read`, `reactions:read`, `users:read`
+4. Install app to workspace
 
-# Start development environment (tunnel + server)
-make dev
+#### GitHub Setup  
+1. Create repository for documentation
+2. Generate Personal Access Token with repository permissions
+3. Add team members as collaborators for PR reviews
 
-# Check tunnel URL anytime
-make tunnel-url
-
-# Stop all services
-make stop
-
-# Force kill all processes
-make clean
-
-# Nuclear option: kill ALL related processes
-make kill-all
-
-# Check service status
-make status
-
-# Show all available commands
-make help
-```
-
-## 🔧 Configuration
-
-### Slack App Setup
-
-1. Create a new Slack app at https://api.slack.com/apps
-2. Enable Event Subscriptions:
-   - **Request URL**: Use the URL from `make dev` output (e.g., `https://abc123.loca.lt/slack/events`)
-   - **Subscribe to Bot Events**: `message.channels`, `reaction_added`
-3. Add Bot Token Scopes:
-   - `channels:history`
-   - `channels:read`
-   - `reactions:read`
-   - `users:read`
-4. Install the app to your workspace
-
-> 💡 **Development Tip**: When running `make dev`, the tunnel URL changes each time. Use `make tunnel-url` to quickly get the current URL for Slack configuration.
-
-### Jira Webhook Setup
-
-1. Go to Jira Settings → System → Webhooks
-2. Create webhook with URL: Use your tunnel URL + `/jira/webhook` (e.g., `https://abc123.loca.lt/jira/webhook`)
-3. Select events: Issue created, updated, commented
-
-> 💡 **Development Tip**: For local testing, use the tunnel URL from `make dev` or `make tunnel-url`
-
-### GitHub Repository Setup
-
-1. Create a repository for documentation
-2. Generate a Personal Access Token with required permissions (see below)
-3. Set up branch protection rules for `main` branch
-4. Add collaborators who will review generated documentation
-
-#### Repository Collaborators
-
-For the system to automatically assign reviewers to Pull Requests, you need to:
-
-1. **Add Collaborators to Repository**:
-   - Go to your GitHub repository → Settings → Collaborators
-   - Add team members who will review documentation
-   - Each collaborator needs at least "Write" access
-
-2. **Configure Environment Variables**:
-   ```bash
-   # Optional: Comma-separated list of GitHub usernames
-   DEFAULT_REVIEWERS=username1,username2,username3
-   ```
-
-3. **Important Notes**:
-   - ⚠️ Only repository collaborators can be assigned as reviewers
-   - ✅ If reviewer assignment fails, the PR will still be created successfully
-   - 💡 Leave `DEFAULT_REVIEWERS` empty to skip automatic reviewer assignment
-
-#### GitHub Token Permissions
-
-Use **Fine-grained Personal Access Tokens** for better security with minimal required permissions:
-
-**Setup Steps:**
-1. Go to GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens**
-2. Click **Generate new token**
-3. Configure:
-   - **Token name**: `Knowledge AI`
-   - **Expiration**: Set appropriate expiration (e.g., 90 days)
-   - **Repository access**: Select your documentation repository
-   - **Permissions** (Repository level):
-     - **Contents**: `Read and write` (create/update files)
-     - **Metadata**: `Read` (access repository info)
-     - **Pull requests**: `Write` (create PRs)
-
-**Why Fine-grained Tokens?**
-- ✅ More secure with minimal permissions
-- ✅ Limited to specific repositories
-- ✅ Better audit trail
-- ✅ Organization approval workflow support
+> 📖 For detailed setup instructions, see [docs/configuration.md](./docs/configuration.md)
 
 ## 🎮 Usage
 
+### Automatic Processing
+
+Knowledge AI automatically processes:
+- **Slack messages** with reactions: 📝 📋 🔖
+- **Slack messages** with keywords: "decision", "action item", "todo"
+- **Jira issues** when created, updated, or commented
+
 ### Manual Collection
 
-Collect Slack messages with specific reactions:
 ```bash
+# Collect Slack messages with specific reactions
 curl -X POST http://localhost:3000/slack/collect \
   -H "Content-Type: application/json" \
   -d '{
@@ -255,303 +147,115 @@ curl -X POST http://localhost:3000/slack/collect \
   }'
 ```
 
-Collect messages with keywords:
-```bash
-curl -X POST http://localhost:3000/slack/collect \
-  -H "Content-Type: application/json" \
-  -d '{
-    "channelId": "C1234567890",
-    "keywords": ["decision", "action item"],
-    "hours": 48
-  }'
+### Code Tracking
+
+Link discussions to code with GitHub links:
+```markdown
+Check this function: [getUserById](github://myorg/api/src/user.service.ts#getUserById)
 ```
 
-### Code Tracking APIs
+Knowledge AI automatically:
+- Extracts code snippets from GitHub
+- Embeds them in documentation  
+- Tracks changes for updates
 
-Process GitHub code links in documents:
-```bash
-curl -X POST http://localhost:3000/code-tracking/process-document \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "doc-123",
-    "title": "API Documentation",
-    "content": "Check this function: [getUserById](github://myorg/api-server/src/user/user.service.ts#getUserById)"
-  }'
-```
-
-Update document with embedded code snippets:
-```bash
-curl -X POST http://localhost:3000/code-tracking/update-document-snippets \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "doc-123",
-    "title": "API Documentation", 
-    "content": "..."
-  }'
-```
-
-Get code references for a document:
-```bash
-curl -X GET http://localhost:3000/code-tracking/document/doc-123/references
-```
-
-Get all active code references:
-```bash
-curl -X GET http://localhost:3000/code-tracking/references/active
-```
-
-### Automatic Processing
-
-The system automatically processes:
-- Slack messages with reactions: 📝 (`:memo:`), 📋 (`:clipboard:`), 🔖 (`:bookmark_tabs:`)
-- Slack messages containing keywords: "decision", "action item", "todo", "follow up", "next steps"
-- Jira issues when created, updated, or commented
-
-## 📁 Project Structure
-
-```
-src/
-├── common/
-│   ├── dto/              # Data Transfer Objects
-│   ├── entities/         # Database entities
-│   ├── interfaces/       # TypeScript interfaces
-│   ├── decorators/       # Custom decorators
-│   ├── guards/           # Authentication guards
-│   └── filters/          # Exception filters
-├── config/
-│   └── database.config.ts
-├── modules/
-│   ├── slack/            # Slack integration
-│   ├── jira/             # Jira integration
-│   ├── github/           # GitHub integration
-│   ├── llm/              # LLM processing
-│   ├── document/         # Document orchestration
-│   ├── code-tracking/    # Code tracking & linking (Phase 1)
-│   └── database/         # Database operations
-└── main.ts
-```
-
-## 🔍 Available Topics
-
-The system classifies content into these predefined topics:
-- `product-planning`
-- `technical-architecture`
-- `bug-reports`
-- `feature-requests`
-- `team-decisions`
-- `project-updates`
-- `security`
-- `performance`
-- `user-feedback`
-- `general-discussion`
+> 🔗 For complete feature documentation, see [docs/features.md](./docs/features.md)
 
 ## 🧪 Testing
-
-Knowledge AI includes comprehensive unit and integration tests to ensure reliability and maintainability.
-
-### Running Tests
 
 ```bash
 # Unit tests
 pnpm test
 
-# Watch mode for development
+# Watch mode for development  
 pnpm test:watch
 
-# Test coverage
-pnpm test:cov
-
-# Debug tests
-pnpm test:debug
-
-# E2E tests (requires test database)
-pnpm test:e2e
-
-# Complete E2E test cycle (start DB → run tests → cleanup)
+# E2E tests with test database
 pnpm test:e2e:full
+
+# Test coverage report
+pnpm test:cov
 ```
 
-> 🚀 **Quick Development Workflow**: Use `make dev` for live development and testing with webhooks!
-
-### E2E Testing Setup
-
-The e2e tests require a separate test database to avoid conflicts with your development environment. We've included a Docker Compose configuration specifically for testing.
-
-#### Test Database Management
+### Development Commands
 
 ```bash
-# Start test database containers
-pnpm test:db:up
+# Development environment (tunnel + server)
+make dev
 
-# Run e2e tests (database must be running)
-pnpm test:e2e
+# Check current tunnel URL
+make tunnel-url  
 
-# Stop and cleanup test database
-pnpm test:db:down
+# Stop all services
+make stop
 
-# Automated: Start DB → Run tests → Cleanup (recommended)
-pnpm test:e2e:full
-```
+# Clean up processes
+make clean
 
-#### Test Database Configuration
-
-The test setup uses:
-- **PostgreSQL**: Port 5433 (to avoid conflicts with dev DB on 5432)
-- **Redis**: Port 6380 (to avoid conflicts with dev Redis on 6379)
-- **Database**: `test_db` with user `test` / password `test`
-
-Configuration files:
-- `docker-compose.test.yml` - Test database containers
-- `test/setup.ts` - Test environment configuration
-- `test/jest-e2e.json` - Jest E2E configuration
-
-### Test Structure
-
-```
-src/
-├── modules/
-│   ├── slack/
-│   │   ├── slack.service.spec.ts
-│   │   └── slack.controller.spec.ts
-│   ├── llm/
-│   │   └── llm.service.spec.ts
-│   ├── github/
-│   │   └── github.service.spec.ts
-│   └── document/
-│       └── document.service.spec.ts
-├── app.controller.spec.ts
-└── app.service.spec.ts
-
-test/
-├── app.e2e-spec.ts          # E2E test cases
-├── jest-e2e.json           # Jest E2E configuration
-├── setup.ts                # Test environment setup
-└── docker-compose.test.yml # Test database containers
-```
-
-### Test Coverage
-
-The test suite covers:
-- **Unit Tests**: Individual service and controller methods
-- **Integration Tests**: Module interactions and workflows
-- **E2E Tests**: Complete API endpoints and workflows with real database
-- **Mocking**: External services (Slack, GitHub, OpenAI, Jira)
-
-### Test Configuration
-
-Tests are configured with:
-- **Jest**: Testing framework with TypeScript support
-- **Supertest**: HTTP assertion library for E2E tests
-- **Docker**: Isolated test database environment
-- **Mock Services**: All external APIs are mocked for reliable testing
-- **Coverage Reports**: Generated in `coverage/` directory
-
-### Writing Tests
-
-When adding new features:
-1. Write unit tests for services and controllers
-2. Mock external dependencies
-3. Test both success and error scenarios
-4. Add E2E tests for new API endpoints
-5. Maintain test coverage above 80%
-
-Example test structure:
-```typescript
-describe('ServiceName', () => {
-  let service: ServiceName;
-  let mockDependency: jest.Mocked<DependencyType>;
-
-  beforeEach(async () => {
-    // Setup test module
-  });
-
-  describe('methodName', () => {
-    it('should handle success case', async () => {
-      // Test implementation
-    });
-
-    it('should handle error case', async () => {
-      // Test error handling
-    });
-  });
-});
-```
-
-#### E2E Test Example
-
-```typescript
-describe('AppController (e2e)', () => {
-  let app: INestApplication;
-
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
-  });
-
-  afterEach(async () => {
-    await app.close();
-  });
-
-  it('/health (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/health')
-      .expect(200)
-      .expect((res) => {
-        expect(res.body).toHaveProperty('status', 'ok');
-      });
-  });
-});
+# Show available commands
+make help
 ```
 
 ## 🚀 Deployment
 
-### Using Railway
+### Railway (Recommended)
+1. Connect GitHub repository to Railway
+2. Set environment variables in dashboard
+3. Deploy automatically on push
 
-1. Connect your GitHub repository to Railway
-2. Set environment variables in Railway dashboard
-3. Deploy automatically on push to main
-
-### Using Docker
-
+### Docker
 ```bash
-# Build image
+# Build and run
 docker build -t knowledge-ai .
-
-# Run container
 docker run -p 3000:3000 --env-file .env knowledge-ai
 ```
 
-## 📊 Monitoring
-
-The application provides logging for:
-- Message processing status
-- LLM API usage and costs
-- GitHub API rate limits
-- Error tracking and debugging
-
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+We welcome contributions! Here's how to get started:
 
-## 📄 License
+### Development Process
+1. **Fork** the repository
+2. **Create** feature branch: `git checkout -b feature/amazing-feature`
+3. **Follow** coding standards (see implementation guide)
+4. **Write tests** for new functionality
+5. **Submit** pull request
 
-This project is licensed under the MIT License.
+### Required for All Contributions
+- [ ] Unit tests pass: `pnpm test`
+- [ ] E2E tests pass: `pnpm test:e2e:full`  
+- [ ] Code follows style guide: `pnpm lint`
+- [ ] Documentation updated if needed
+
+> 💻 For detailed development guidelines, see [docs/implementation.md](./docs/implementation.md)
+
+### Areas for Contribution
+- 🔌 New integrations (Teams, Discord, Linear)
+- 🧠 AI prompt improvements
+- 🎨 UI/UX enhancements  
+- 📚 Documentation improvements
+- 🐛 Bug fixes and performance optimizations
+
+## 📚 Documentation
+
+- 📖 **[Complete Documentation](./docs/)** - Comprehensive guides and references
+- 🎯 **[Project Overview](./docs/project-overview.md)** - Vision and goals
+- 🏗️ **[Architecture](./docs/project-structure.md)** - Technical deep dive
+- ⚙️ **[Configuration](./docs/configuration.md)** - Setup and integration guides
+- 🗺️ **[Roadmap](./docs/roadmap.md)** - Future features and timeline
 
 ## 🆘 Support
 
-For issues and questions:
-1. Check the [Issues](../../issues) page
-2. Review the documentation
-3. Contact the development team
+- 📝 **Issues**: [GitHub Issues](../../issues) for bugs and feature requests
+- 💬 **Discussions**: [GitHub Discussions](../../discussions) for questions
+- 📧 **Contact**: Reach out to the development team
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
+
+⭐ **If Knowledge AI helps your team, please give it a star!**
 
 *Built with ❤️ using NestJS, OpenAI GPT-4, and TypeScript*
