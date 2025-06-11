@@ -73,6 +73,22 @@ export class CodeReference {
   @IsBoolean()
   isActive: boolean;
 
+  @Column({ nullable: true })
+  @IsOptional()
+  @IsString()
+  commitSha?: string;
+
+  @Column({ nullable: true })
+  @IsOptional()
+  lastModified?: Date;
+
+  @Column({ default: false })
+  @IsBoolean()
+  isStale: boolean;
+
+  @Column('text', { array: true, default: '{}' })
+  dependencies: string[];
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -134,5 +150,38 @@ export class CodeReference {
 
   get contentHash(): string {
     return this.hash;
+  }
+
+  // Phase 2: Smart Code Tracking methods
+  markAsStale(): void {
+    this.isStale = true;
+  }
+
+  markAsFresh(): void {
+    this.isStale = false;
+  }
+
+  updateCommitInfo(commitSha: string, lastModified: Date): void {
+    this.commitSha = commitSha;
+    this.lastModified = lastModified;
+    this.markAsFresh();
+  }
+
+  addDependency(filePath: string): void {
+    if (!this.dependencies.includes(filePath)) {
+      this.dependencies.push(filePath);
+    }
+  }
+
+  removeDependency(filePath: string): void {
+    this.dependencies = this.dependencies.filter(dep => dep !== filePath);
+  }
+
+  hasDependency(filePath: string): boolean {
+    return this.dependencies.includes(filePath);
+  }
+
+  getDependencyCount(): number {
+    return this.dependencies.length;
   }
 }

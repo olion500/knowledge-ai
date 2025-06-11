@@ -334,3 +334,225 @@ jobs:
       - run: npm run test:e2e
       - run: npm run build
 ``` 
+
+## Smart Code Tracking Patterns
+
+### Webhook Event Processing Pattern
+```typescript
+@Controller('api/webhooks')
+export class WebhookController {
+  @Post('github')
+  async handleGitHubWebhook(@Headers() headers: any, @Body() payload: any) {
+    // 1. Validate webhook signature
+    const isValid = this.webhookService.validateSignature(payload, headers);
+    if (!isValid) throw new BadRequestException('Invalid signature');
+
+    // 2. Route by event type
+    const eventType = headers['x-github-event'];
+    switch (eventType) {
+      case 'push':
+        return this.webhookService.handlePushEvent(payload);
+      case 'pull_request':
+        return this.webhookService.handlePullRequestEvent(payload);
+      default:
+        return { status: 'ignored', event: eventType };
+    }
+  }
+}
+```
+
+### Enhanced Entity Pattern with Smart Tracking
+```typescript
+@Entity('code_references')
+export class CodeReference {
+  // Phase 1 fields
+  @Column() repositoryOwner: string;
+  @Column() filePath: string;
+  @Column() content: string;
+
+  // Phase 2 smart tracking fields
+  @Column({ nullable: true }) commitSha?: string;
+  @Column({ nullable: true }) lastModified?: Date;
+  @Column({ default: false }) isStale: boolean;
+  @Column('text', { array: true, default: '{}' }) dependencies: string[];
+
+  // Smart tracking business methods
+  markAsStale(): void { this.isStale = true; }
+  markAsFresh(): void { this.isStale = false; }
+  
+  updateCommitInfo(commitSha: string, lastModified: Date): void {
+    this.commitSha = commitSha;
+    this.lastModified = lastModified;
+    this.markAsFresh();
+  }
+
+  addDependency(filePath: string): void {
+    if (!this.dependencies.includes(filePath)) {
+      this.dependencies.push(filePath);
+    }
+  }
+}
+```
+
+### Smart Change Detection Pattern
+```typescript
+@Injectable()
+export class SmartCodeTrackingService {
+  async processCodeChange(changeEvent: CodeChangeEvent): Promise<boolean> {
+    try {
+      // 1. Mark event as processing
+      changeEvent.markAsProcessing();
+      await this.save(changeEvent);
+
+      // 2. Process each affected reference
+      for (const referenceId of changeEvent.affectedReferences) {
+        const reference = await this.findReference(referenceId);
+        if (reference) {
+          await this.processReferenceChange(reference, changeEvent);
+        }
+      }
+
+      // 3. Mark as completed
+      changeEvent.markAsCompleted();
+      await this.save(changeEvent);
+      
+      return true;
+    } catch (error) {
+      changeEvent.markAsFailed(error.message);
+      await this.save(changeEvent);
+      throw error;
+    }
+  }
+
+  private async processReferenceChange(
+    reference: CodeReference,
+    changeEvent: CodeChangeEvent,
+  ): Promise<void> {
+    switch (changeEvent.changeType) {
+      case ChangeType.DELETED:
+        return this.handleDeletedFile(reference);
+      case ChangeType.MODIFIED:
+        return this.handleModifiedFile(reference, changeEvent);
+      case ChangeType.MOVED:
+        return this.handleMovedFile(reference, changeEvent);
+    }
+  }
+}
+```
+
+### Intelligent Notification Pattern
+```typescript
+@Injectable()
+export class NotificationService {
+  async sendSmartNotification(change: CodeChangeEvent): Promise<void> {
+    // 1. Classify change severity
+    const severity = await this.classifyChangeSeverity(change);
+    
+    // 2. Determine notification targets
+    const targets = await this.getNotificationTargets(change);
+    
+    // 3. Format context-aware message
+    const message = this.formatNotificationMessage(change, severity);
+    
+    // 4. Send via appropriate channels
+    await this.sendToChannels(message, targets, severity);
+  }
+
+  private async classifyChangeSeverity(change: CodeChangeEvent): Promise<'low' | 'medium' | 'high'> {
+    const factors = {
+      affectedReferences: change.affectedReferences.length,
+      changeType: change.changeType,
+      fileImportance: await this.getFileImportanceScore(change.filePath),
+    };
+
+    // Use heuristics to determine severity
+    if (factors.changeType === ChangeType.DELETED || factors.affectedReferences > 5) {
+      return 'high';
+    } else if (factors.affectedReferences > 2 || factors.fileImportance > 0.7) {
+      return 'medium';
+    }
+    return 'low';
+  }
+}
+```
+
+### Testing Patterns for Phase 2
+
+#### Webhook Controller Testing
+```typescript
+describe('WebhookController - Phase 2', () => {
+  it('should handle pull request events', async () => {
+    const prPayload = {
+      action: 'opened',
+      repository: { full_name: 'owner/repo' },
+      pull_request: { number: 123 },
+    };
+
+    mockWebhookService.handlePullRequestEvent.mockResolvedValue(undefined);
+    
+    const result = await controller.handleGitHubWebhook(prHeaders, prPayload);
+    
+    expect(mockWebhookService.handlePullRequestEvent).toHaveBeenCalledWith(prPayload);
+    expect(result).toEqual({ status: 'success', event: 'pull_request' });
+  });
+});
+```
+
+#### Entity Business Logic Testing
+```typescript
+describe('CodeReference - Smart Tracking', () => {
+  it('should manage staleness state', () => {
+    const reference = new CodeReference();
+    
+    reference.markAsStale();
+    expect(reference.isStale).toBe(true);
+    
+    reference.markAsFresh();
+    expect(reference.isStale).toBe(false);
+  });
+
+  it('should update commit info and mark as fresh', () => {
+    const reference = new CodeReference();
+    reference.isStale = true;
+    
+    const commitSha = 'abc123';
+    const lastModified = new Date();
+    
+    reference.updateCommitInfo(commitSha, lastModified);
+    
+    expect(reference.commitSha).toBe(commitSha);
+    expect(reference.lastModified).toBe(lastModified);
+    expect(reference.isStale).toBe(false);
+  });
+});
+```
+
+#### Integration Testing for Smart Features
+```typescript
+describe('Smart Code Tracking Integration', () => {
+  beforeEach(async () => {
+    // Setup test database with CodeReference entities
+    await testDb.setUp();
+  });
+
+  it('should process webhook event end-to-end', async () => {
+    // 1. Setup test data
+    const codeReference = await createTestCodeReference();
+    
+    // 2. Simulate webhook event
+    const pushPayload = createPushEventPayload({
+      modifiedFiles: [codeReference.filePath],
+    });
+    
+    // 3. Process webhook
+    await webhookController.handleGitHubWebhook(headers, pushPayload);
+    
+    // 4. Verify smart tracking
+    const updatedReference = await codeReferenceRepo.findOne(codeReference.id);
+    expect(updatedReference.isStale).toBe(true);
+    
+    // 5. Verify notification sent
+    expect(mockNotificationService.sendSmartNotification).toHaveBeenCalled();
+  });
+});
+```

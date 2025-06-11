@@ -11,6 +11,7 @@ describe('WebhookController', () => {
 
   const mockWebhookService = {
     handlePushEvent: jest.fn(),
+    handlePullRequestEvent: jest.fn(),
     validateWebhookSignature: jest.fn(),
     processPendingEvents: jest.fn(),
   };
@@ -118,6 +119,29 @@ describe('WebhookController', () => {
         controller.handleGitHubWebhook(mockHeaders, mockPayload)
       ).rejects.toThrow('Service error');
     });
+
+    it('should handle pull request events successfully', async () => {
+      const prHeaders = { ...mockHeaders, 'x-github-event': 'pull_request' };
+      const prPayload = {
+        action: 'opened',
+        repository: { full_name: 'owner/repo' },
+        pull_request: { number: 123, head: { sha: 'abc123' } },
+      };
+
+      mockConfigService.get.mockReturnValue('webhook-secret');
+      mockWebhookService.validateWebhookSignature.mockReturnValue(true);
+      mockWebhookService.handlePullRequestEvent.mockResolvedValue(undefined);
+
+      const result = await controller.handleGitHubWebhook(prHeaders, prPayload);
+
+      expect(mockWebhookService.validateWebhookSignature).toHaveBeenCalledWith(
+        JSON.stringify(prPayload),
+        'sha256=valid_signature',
+        'webhook-secret',
+      );
+      expect(mockWebhookService.handlePullRequestEvent).toHaveBeenCalledWith(prPayload);
+      expect(result).toEqual({ status: 'success', event: 'pull_request' });
+    });
   });
 
   describe('processPendingEvents', () => {
@@ -144,7 +168,7 @@ describe('WebhookController', () => {
       expect(result).toEqual({
         status: 'active',
         endpoint: '/api/webhooks/github',
-        supportedEvents: ['push'],
+        supportedEvents: ['push', 'pull_request'],
       });
     });
   });

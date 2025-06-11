@@ -43,6 +43,76 @@ export class GitHubWebhookService {
     }
   }
 
+  async handlePullRequestEvent(payload: any): Promise<void> {
+    this.logger.log(`Processing pull request event for repository: ${payload.repository.full_name}`);
+
+    const { action, pull_request } = payload;
+    const repository = payload.repository.full_name;
+
+    // Only process opened, synchronize (updated), and closed PR events
+    if (!['opened', 'synchronize', 'closed'].includes(action)) {
+      this.logger.log(`Ignoring PR action: ${action}`);
+      return;
+    }
+
+    // For merged PRs, process the merge commit
+    if (action === 'closed' && pull_request.merged) {
+      await this.handleMergedPR(repository, pull_request);
+      return;
+    }
+
+    // For opened/updated PRs, analyze the changes
+    if (action === 'opened' || action === 'synchronize') {
+      await this.analyzePRChanges(repository, pull_request);
+    }
+  }
+
+  private async handleMergedPR(repository: string, pullRequest: any): Promise<void> {
+    this.logger.log(`Processing merged PR #${pullRequest.number} in ${repository}`);
+    
+    // Get the merge commit SHA
+    const mergeCommitSha = pullRequest.merge_commit_sha;
+    if (!mergeCommitSha) {
+      this.logger.warn('No merge commit SHA found for merged PR');
+      return;
+    }
+
+    // Create a synthetic commit event for the merge
+    const syntheticCommit = {
+      id: mergeCommitSha,
+      timestamp: pullRequest.merged_at,
+      message: `Merge pull request #${pullRequest.number} from ${pullRequest.head.ref}`,
+      added: [], // This would need to be fetched from GitHub API
+      removed: [],
+      modified: [],
+    };
+
+    // Get all code references for this repository
+    const [owner, repo] = repository.split('/');
+    const allReferences = await this.codeReferenceRepository.find({
+      where: { 
+        repositoryOwner: owner,
+        repositoryName: repo,
+      },
+    });
+
+    await this.processCommitChanges(repository, syntheticCommit, allReferences);
+  }
+
+  private async analyzePRChanges(repository: string, pullRequest: any): Promise<void> {
+    this.logger.log(`Analyzing PR #${pullRequest.number} changes in ${repository}`);
+    
+    // This is where we could implement PR change analysis
+    // For now, we'll log the event for future implementation
+    this.logger.log(`PR #${pullRequest.number} - Head: ${pullRequest.head.sha}, Base: ${pullRequest.base.sha}`);
+    
+    // TODO: Implement PR diff analysis
+    // - Fetch PR diff from GitHub API
+    // - Analyze changed files
+    // - Check if any referenced code is affected
+    // - Create preview of documentation updates needed
+  }
+
   private async processCommitChanges(
     repository: string,
     commit: any,

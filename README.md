@@ -15,7 +15,8 @@ Knowledge AI automatically captures important conversations from **Slack** and *
 - 🧠 **AI-Powered**: Uses GPT-4 to extract key insights, decisions, and action items
 - 🔄 **Automated Workflow**: From conversation to documentation with zero manual effort  
 - 📝 **Structured Output**: Consistent markdown documents organized by topic
-- 🔗 **Code Integration**: Links discussions to actual code with smart GitHub integration
+- 🔗 **Smart Code Tracking**: Real-time synchronization between code and documentation
+- 🎯 **Intelligent Notifications**: Context-aware alerts when code changes affect docs
 - 👥 **Team Collaboration**: Creates GitHub PRs for review and approval
 
 ### 🚀 How It Works
@@ -158,6 +159,24 @@ Knowledge AI automatically:
 - Extracts code snippets from GitHub
 - Embeds them in documentation  
 - Tracks changes for updates
+
+### Smart Code Tracking
+- **Real-time Webhook Processing**: Instant detection of code changes via GitHub webhooks
+- **Intelligent Reference Updates**: Automatic updates when referenced code changes
+- **Dependency Tracking**: Monitors file relationships and cascading impacts
+- **Staleness Detection**: Identifies outdated code references automatically
+
+### Enhanced Notifications
+- **Context-aware Alerts**: Smart notifications based on change impact
+- **Multi-channel Support**: Slack, email, and in-app notifications
+- **Batched Updates**: Groups related changes for efficient processing
+- **Custom Notification Rules**: Configurable alerts based on team preferences
+
+### Advanced Event Processing
+- **Pull Request Integration**: Processes PR events (opened, merged, synchronized)
+- **Merge Conflict Handling**: Intelligent resolution of documentation conflicts  
+- **Batch Change Processing**: Efficient handling of large code updates
+- **Security Validation**: Cryptographic webhook signature verification
 
 > 🔗 For complete feature documentation, see [docs/features.md](./docs/features.md)
 

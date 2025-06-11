@@ -568,6 +568,153 @@ AI-generated documentation from recent team discussions.
 
 *These features work together to provide a comprehensive knowledge management solution that captures, processes, and organizes team knowledge automatically while maintaining quality through human oversight.* 
 
+## 🚀 Phase 2: Smart Code Tracking Features
+
+### F014: Advanced GitHub Webhook Processing
+
+**Overview**: Real-time processing of GitHub webhook events to maintain code-documentation synchronization.
+
+#### Enhanced Event Handling
+
+**Push Event Processing**:
+- **File Change Detection**: Analyzes added, modified, and deleted files
+- **Reference Impact Analysis**: Identifies affected code references
+- **Batch Processing**: Groups related changes for efficient processing
+- **Commit History Tracking**: Maintains commit SHA references for each code change
+
+**Pull Request Event Processing**:
+- **PR Lifecycle Handling**: Processes opened, synchronized, and closed events
+- **Merge Detection**: Identifies merged PRs and processes merge commits
+- **Change Preview**: Analyzes PR changes before merge for documentation impact
+- **Branch Tracking**: Tracks changes across different branches
+
+#### Business Rules
+
+**Event Filtering**:
+- **Relevant Repositories**: Only processes configured repositories
+- **Branch Filtering**: Configurable branch inclusion/exclusion rules
+- **File Type Filtering**: Focuses on relevant file types (code files vs. docs)
+- **Size Limits**: Handles large commits efficiently with batching
+
+**Security & Validation**:
+- **Webhook Signature Validation**: Cryptographic verification of webhook authenticity
+- **Rate Limiting**: Prevents webhook flooding attacks
+- **Error Recovery**: Automatic retry for failed webhook processing
+- **Monitoring**: Comprehensive logging and monitoring of webhook events
+
+### F015: Enhanced Code Reference Tracking
+
+**Overview**: Advanced tracking of code references with dependency analysis and staleness detection.
+
+#### Smart Reference Management
+
+**Reference State Tracking**:
+```typescript
+// Enhanced CodeReference with Phase 2 fields
+interface CodeReference {
+  // ... existing fields
+  commitSha?: string;          // Current commit SHA
+  lastModified?: Date;         // Last modification timestamp
+  isStale: boolean;           // Staleness indicator
+  dependencies: string[];     // Related file dependencies
+}
+```
+
+**Dependency Analysis**:
+- **File Relationship Tracking**: Identifies imports, requires, and includes
+- **Impact Propagation**: Cascades changes through dependency chains
+- **Circular Dependency Detection**: Identifies and handles circular references
+- **Dependency Visualization**: Provides dependency relationship insights
+
+#### Staleness Detection
+
+**Automated Staleness Checking**:
+- **Content Hash Comparison**: Detects actual content changes vs. metadata changes
+- **Line Movement Detection**: Tracks code movement within files
+- **Function Signature Analysis**: Identifies function signature changes
+- **Semantic Change Analysis**: Distinguishes significant vs. trivial changes
+
+**Smart Update Strategies**:
+- **Automatic Updates**: Minor changes updated without human intervention
+- **Review Required**: Major changes flagged for human review
+- **Conflict Resolution**: Intelligent handling of merge conflicts
+- **Batch Updates**: Groups related reference updates
+
+#### Business Rules
+
+**Staleness Criteria**:
+- **Content Changes**: Direct changes to referenced code
+- **Dependency Changes**: Changes to imported/required files
+- **Function Signature Changes**: Parameter or return type modifications
+- **Context Changes**: Changes to surrounding code context
+
+**Update Priorities**:
+- **Critical References**: High-priority updates for critical code
+- **Documentation Impact**: Prioritizes changes affecting multiple documents
+- **Change Magnitude**: Larger changes get higher priority
+- **User Activity**: Recently accessed documents get priority
+
+### F016: Intelligent Notification System
+
+**Overview**: Context-aware notification system for code changes and documentation updates.
+
+#### Smart Notification Logic
+
+**Change Classification**:
+- **Critical Changes**: Breaking changes requiring immediate attention
+- **Significant Changes**: Important changes requiring review
+- **Minor Changes**: Small changes with automatic handling
+- **Cosmetic Changes**: Formatting/comment changes (typically ignored)
+
+**Notification Targeting**:
+- **Document Authors**: Notify creators of affected documentation
+- **Code Owners**: Alert maintainers of changed code
+- **Discussion Participants**: Inform original discussion participants
+- **Stakeholders**: Notify relevant team members based on impact
+
+#### Notification Channels
+
+**Multi-Channel Support**:
+- **Slack Notifications**: Rich messages with code context
+- **Email Alerts**: Digest emails for less urgent changes
+- **In-App Notifications**: Dashboard notifications for admin users
+- **Webhook Notifications**: Integration with external systems
+
+**Message Formatting**:
+```markdown
+🔄 Code Reference Update
+
+📋 **Document**: Technical Architecture Decision - API Design
+🔗 **Repository**: myorg/api-service
+📝 **File**: src/controllers/user.controller.ts
+📊 **Impact**: 3 code references affected
+
+**Change Summary**:
+- Function signature modified: `getUser(id: string)` → `getUser(id: string, options?: UserOptions)`
+- New optional parameter added
+- Backward compatibility maintained
+
+**Action Required**: Review documentation for completeness
+**Auto-update**: ✅ References updated automatically
+**Review Required**: ❌ No manual review needed
+
+[View Changes] [Update Documentation] [Dismiss]
+```
+
+#### Business Rules
+
+**Notification Frequency**:
+- **Real-time**: Critical changes notify immediately
+- **Batched**: Minor changes grouped in hourly/daily digests
+- **Threshold-based**: Configurable change magnitude thresholds
+- **User Preferences**: Customizable notification preferences per user
+
+**Notification Suppression**:
+- **Duplicate Prevention**: Avoid multiple notifications for the same change
+- **Change Consolidation**: Group related changes in single notification
+- **Quiet Hours**: Respect user quiet hours and time zones
+- **Temporary Suppression**: Allow temporary notification pause
+
 ## Business Rules
 
 ### Content Processing Rules

@@ -19,6 +19,8 @@ describe('CodeReference Entity', () => {
       codeReference.content = 'console.log("test");';
       codeReference.hash = 'hash123';
       codeReference.isActive = true;
+      codeReference.isStale = false; // Add default value for new field
+      codeReference.dependencies = []; // Add default value for new field
 
       const errors = await validate(codeReference);
       expect(errors).toHaveLength(0);
@@ -104,6 +106,72 @@ describe('CodeReference Entity', () => {
       expect(codeReference.hash).toBeDefined();
       expect(codeReference.hash.length).toBeGreaterThan(0);
       expect(codeReference.validateHash()).toBe(true);
+    });
+  });
+
+  describe('Phase 2: Smart Code Tracking', () => {
+    beforeEach(() => {
+      codeReference.repositoryOwner = 'testowner';
+      codeReference.repositoryName = 'testrepo';
+      codeReference.filePath = 'src/test.ts';
+      codeReference.referenceType = 'line';
+      codeReference.content = 'console.log("test");';
+      codeReference.hash = 'hash123';
+      codeReference.isActive = true;
+      codeReference.isStale = false;
+      codeReference.dependencies = [];
+    });
+
+    it('should mark as stale', () => {
+      codeReference.markAsStale();
+      expect(codeReference.isStale).toBe(true);
+    });
+
+    it('should mark as fresh', () => {
+      codeReference.isStale = true;
+      codeReference.markAsFresh();
+      expect(codeReference.isStale).toBe(false);
+    });
+
+    it('should update commit info', () => {
+      const commitSha = 'abc123';
+      const lastModified = new Date();
+
+      codeReference.updateCommitInfo(commitSha, lastModified);
+
+      expect(codeReference.commitSha).toBe(commitSha);
+      expect(codeReference.lastModified).toBe(lastModified);
+      expect(codeReference.isStale).toBe(false);
+    });
+
+    it('should manage dependencies', () => {
+      const filePath1 = 'src/utils.ts';
+      const filePath2 = 'src/types.ts';
+
+      // Add dependencies
+      codeReference.addDependency(filePath1);
+      codeReference.addDependency(filePath2);
+
+      expect(codeReference.dependencies).toContain(filePath1);
+      expect(codeReference.dependencies).toContain(filePath2);
+      expect(codeReference.getDependencyCount()).toBe(2);
+      expect(codeReference.hasDependency(filePath1)).toBe(true);
+
+      // Remove dependency
+      codeReference.removeDependency(filePath1);
+      expect(codeReference.dependencies).not.toContain(filePath1);
+      expect(codeReference.getDependencyCount()).toBe(1);
+      expect(codeReference.hasDependency(filePath1)).toBe(false);
+    });
+
+    it('should not add duplicate dependencies', () => {
+      const filePath = 'src/utils.ts';
+
+      codeReference.addDependency(filePath);
+      codeReference.addDependency(filePath); // Try to add again
+
+      expect(codeReference.dependencies).toEqual([filePath]);
+      expect(codeReference.getDependencyCount()).toBe(1);
     });
   });
 });

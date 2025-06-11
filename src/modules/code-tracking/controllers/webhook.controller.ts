@@ -46,6 +46,11 @@ export class WebhookController {
           this.logger.log(`Successfully processed push event for ${payload.repository?.full_name}`);
           return { status: 'success', event: eventType };
         
+        case 'pull_request':
+          await this.webhookService.handlePullRequestEvent(payload);
+          this.logger.log(`Successfully processed pull request event for ${payload.repository?.full_name}`);
+          return { status: 'success', event: eventType };
+        
         case 'ping':
           this.logger.log('Received GitHub webhook ping');
           return { status: 'success', event: 'ping', message: 'Webhook is configured correctly' };
@@ -78,7 +83,7 @@ export class WebhookController {
     return {
       status: 'active',
       endpoint: '/api/webhooks/github',
-      supportedEvents: ['push'],
+      supportedEvents: ['push', 'pull_request'],
     };
   }
 } 
