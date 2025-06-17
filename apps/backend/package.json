@@ -1,0 +1,23 @@
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "description": "Knowledge AI Backend Service (NestJS)",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{.,modules,common,config}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:db:up": "docker-compose -f ../../docker-compose.test.yml up -d",
+    "test:db:down": "docker-compose -f ../../docker-compose.test.yml down -v",
+    "test:e2e:full": "pnpm run test:db:up && sleep 5 && pnpm run test:e2e && pnpm run test:db:down"
+  }
+} 

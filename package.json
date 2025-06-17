@@ -5,23 +5,6 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
-  "scripts": {
-    "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "test:db:up": "docker-compose -f docker-compose.test.yml up -d",
-    "test:db:down": "docker-compose -f docker-compose.test.yml down -v",
-    "test:e2e:full": "pnpm run test:db:up && sleep 5 && pnpm run test:e2e && pnpm run test:db:down"
-  },
   "dependencies": {
     "@nestjs/bull": "^10.0.1",
     "@nestjs/common": "^11.0.1",
@@ -80,7 +63,9 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "turbo": "^2.5.4",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
-  }
+  },
+  "packageManager": "pnpm@10.12.1"
 }
