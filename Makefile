@@ -1,4 +1,4 @@
-.PHONY: dev clean install help status stop kill-all tunnel-url
+.PHONY: dev clean install help status stop kill-all tunnel-url dev-backend dev-admin dev-all test test-backend test-admin
 
 # Colors
 GREEN = \033[0;32m
@@ -38,6 +38,12 @@ help:
 	@echo "  $(BLUE)make kill-all$(NC) - Nuclear option: kill ALL related processes"
 	@echo "  $(BLUE)make status$(NC)   - Check service status"
 	@echo "  $(BLUE)make tunnel-url$(NC) - Show current tunnel URL"
+	@echo "  $(BLUE)make dev-backend$(NC) - Start backend server"
+	@echo "  $(BLUE)make dev-admin$(NC) - Start admin dashboard"
+	@echo "  $(BLUE)make dev-all$(NC) - Start all services (backend + admin + docker services)"
+	@echo "  $(BLUE)make test-backend$(NC) - Run backend tests"
+	@echo "  $(BLUE)make test-admin$(NC) - Run admin tests"
+	@echo "  $(BLUE)make test$(NC) - Run all tests"
 
 install:
 	@echo "$(YELLOW)Installing dependencies...$(NC)"
@@ -142,3 +148,40 @@ tunnel-url:
 		echo "$(RED)❌ No tunnel log file found$(NC)"; \
 		echo "$(YELLOW)💡 Try running 'make dev' first$(NC)"; \
 	fi 
+
+dev-backend:
+	@echo "🚀 Starting backend server..."
+	cd apps/backend && pnpm dev
+
+dev-admin:
+	@echo "🚀 Starting admin dashboard..."
+	cd apps/admin && pnpm dev
+
+dev-all:
+	@echo "🚀 Starting all development services..."
+	docker-compose up -d postgres redis
+	@echo "📦 Starting backend and admin in parallel..."
+	make -j2 dev-backend dev-admin
+
+stop:
+	@echo "🛑 Stopping all services..."
+	docker-compose down
+	@echo "✅ All services stopped"
+
+clean:
+	@echo "🧹 Cleaning up..."
+	docker-compose down -v
+	rm -rf node_modules
+	rm -rf apps/*/node_modules
+	rm -rf packages/*/node_modules
+	@echo "✅ Cleanup complete"
+
+test-backend:
+	@echo "🧪 Running backend tests..."
+	cd apps/backend && pnpm test
+
+test-admin:
+	@echo "🧪 Running admin tests..."
+	cd apps/admin && pnpm test
+
+test: test-backend test-admin 

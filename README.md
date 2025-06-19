@@ -1,280 +1,205 @@
 # Knowledge AI
 
-> AI-powered knowledge management system that transforms team conversations into structured documentation
-
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/typescript-5.0-blue.svg)](https://www.typescriptlang.org/)
-
-## 🎯 What is Knowledge AI?
-
-Knowledge AI automatically captures important conversations from **Slack** and **Jira**, processes them with advanced AI, and generates **structured documentation** directly in your GitHub repository.
-
-### ✨ Key Benefits
-
-- 🧠 **AI-Powered**: Uses GPT-4 to extract key insights, decisions, and action items
-- 🔄 **Automated Workflow**: From conversation to documentation with zero manual effort  
-- 📝 **Structured Output**: Consistent markdown documents organized by topic
-- 🔗 **Smart Code Tracking**: Real-time synchronization between code and documentation
-- 🎯 **Intelligent Notifications**: Context-aware alerts when code changes affect docs
-- 👥 **Team Collaboration**: Creates GitHub PRs for review and approval
-
-### 🚀 How It Works
-
-```mermaid
-graph LR
-    A[Slack Reactions 📝] --> B[AI Processing]
-    C[Jira Updates] --> B
-    B --> D[Generate Docs]
-    D --> E[GitHub PR]
-    E --> F[Team Review]
-```
-
-1. **Capture**: Team marks important messages with reactions (📝,📋,🔖) or keywords
-2. **Process**: AI extracts key information, decisions, and action items
-3. **Generate**: Creates structured markdown documentation
-4. **Review**: Automatically creates GitHub PRs for team approval
-5. **Organize**: Documents are grouped by topic, not chronologically
-
-## 🏗️ Architecture Overview
-
-Knowledge AI is built with modern, scalable technologies:
-
-- **Backend**: NestJS + TypeScript
-- **Database**: PostgreSQL + Redis
-- **AI**: OpenAI GPT-4 / Local Ollama
-- **Integrations**: Slack, Jira, GitHub APIs
-- **Queue**: Bull for async processing
-
-> 📚 For detailed architecture information, see [docs/project-structure.md](./docs/project-structure.md)
-
-## 📋 Prerequisites
-
-- **Node.js** 20+ 
-- **PostgreSQL** 12+
-- **Redis** 6+
-- **API Keys**: Slack Bot Token, GitHub Token, OpenAI API Key (or local Ollama)
-- **Access**: Jira instance (if using Jira integration)
+AI-powered knowledge management system: Slack/Jira → LLM Processing → GitHub Documentation
 
 ## 🚀 Quick Start
 
-### 1. Installation
+### Prerequisites
 
+- Node.js 20.x
+- pnpm 10.x
+- Docker & Docker Compose
+- PostgreSQL 15+
+- Redis 7+
+
+### Installation
+
+1. Clone the repository:
 ```bash
-# Clone repository
-git clone <your-repo-url>
+git clone https://github.com/your-org/knowledge-ai.git
 cd knowledge-ai
-
-# Install dependencies (includes development tools)
-make install
 ```
 
-### 2. Configuration
-
+2. Install dependencies:
 ```bash
-# Copy environment template
+pnpm install
+```
+
+3. Set up environment variables:
+```bash
 cp env.template .env
-
-# Edit configuration
-nano .env
 ```
 
-Required environment variables:
-- `SLACK_BOT_TOKEN` - Your Slack bot token
-- `GITHUB_TOKEN` - GitHub personal access token  
-- `OPENAI_API_KEY` - OpenAI API key (or setup Ollama for local AI)
-- Database and Redis connection strings
+4. Start development services:
+```bash
+docker-compose up -d
+```
 
-> 🔧 For complete configuration guide, see [docs/configuration.md](./docs/configuration.md)
+### Development
 
-### 3. Development Setup
+프로젝트는 두 가지 방법으로 실행할 수 있습니다:
+
+#### 1. Makefile 사용 (권장)
+
+모든 서비스를 한 번에 실행:
+```bash
+make dev-all
+```
+
+또는 개별적으로 실행:
+```bash
+# 백엔드 서버 실행
+make dev-backend
+
+# Admin 대시보드 실행
+make dev-admin
+```
+
+#### 2. 수동 실행
+
+1. 백엔드 서버 실행:
+```bash
+# From the root directory
+cd apps/backend
+pnpm dev
+```
+
+2. Admin 대시보드 실행:
+```bash
+# From the root directory
+cd apps/admin
+pnpm dev
+```
+
+서비스 접속 주소:
+- Admin 대시보드: `http://localhost:3001`
+- Backend API: `http://localhost:3000`
+
+#### 유용한 Makefile 명령어
 
 ```bash
-# Start development environment with webhook tunneling
-make dev
+make help         # 사용 가능한 모든 명령어 보기
+make install      # 의존성 설치
+make dev-all      # 모든 서비스 실행
+make stop         # 모든 서비스 중지
+make clean        # 의존성 및 도커 볼륨 정리
+make test         # 모든 테스트 실행
 ```
 
-This command:
-- 🚇 Creates secure tunnel for webhook testing  
-- 📋 Displays webhook URLs for Slack/Jira setup
-- 🔥 Starts server with live reload
-- 📊 Shows real-time logs
+### Environment Configuration
 
-**Example output:**
+환경 변수는 두 가지 방법으로 설정할 수 있습니다:
+
+1. Admin 대시보드 사용:
+   - `http://localhost:3001/settings` 접속
+   - 각 서비스별 환경 변수 설정
+   - 변경사항 저장
+
+2. 직접 .env 파일 수정:
+   ```bash
+   # GitHub 설정
+   GITHUB_TOKEN=your_token
+   GITHUB_WEBHOOK_SECRET=your_secret
+   GITHUB_ORGANIZATION=your_org
+
+   # Slack 설정
+   SLACK_BOT_TOKEN=xoxb-your-token
+   SLACK_APP_TOKEN=xapp-your-token
+   SLACK_SIGNING_SECRET=your_secret
+
+   # Jira 설정
+   JIRA_HOST=your_jira_host
+   JIRA_EMAIL=your_email
+   JIRA_API_TOKEN=your_token
+
+   # LLM 설정
+   OPENAI_API_KEY=your_key
+   OLLAMA_HOST=http://localhost:11434
+   LLM_PROVIDER=openai # or ollama
+
+   # 데이터베이스 설정
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+   POSTGRES_DB=knowledge_ai
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+
+   # Redis 설정
+   REDIS_HOST=localhost
+   REDIS_PORT=6379
+   ```
+
+## 📦 Project Structure
+
 ```
-🚀 Starting development environment...
-✅ Tunnel ready!
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 SLACK CONFIGURATION  
-🌐 Tunnel URL: https://abc123.loca.lt
-📝 Event Subscription URL: https://abc123.loca.lt/slack/events
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-### 4. Configure Integrations
-
-#### Slack Setup
-1. Create Slack app at [api.slack.com/apps](https://api.slack.com/apps)
-2. Enable Event Subscriptions with the tunnel URL from `make dev`
-3. Add bot scopes: `channels:history`, `channels:read`, `reactions:read`, `users:read`
-4. Install app to workspace
-
-#### GitHub Setup  
-1. Create repository for documentation
-2. Generate Personal Access Token with repository permissions
-3. Add team members as collaborators for PR reviews
-
-> 📖 For detailed setup instructions, see [docs/configuration.md](./docs/configuration.md)
-
-## 🎮 Usage
-
-### Automatic Processing
-
-Knowledge AI automatically processes:
-- **Slack messages** with reactions: 📝 📋 🔖
-- **Slack messages** with keywords: "decision", "action item", "todo"
-- **Jira issues** when created, updated, or commented
-
-### Manual Collection
-
-```bash
-# Collect Slack messages with specific reactions
-curl -X POST http://localhost:3000/slack/collect \
-  -H "Content-Type: application/json" \
-  -d '{
-    "channelId": "C1234567890",
-    "reactionName": "memo",
-    "hours": 24
-  }'
-```
-
-### Code Tracking
-
-Link discussions to code with GitHub links:
-```markdown
-Check this function: [getUserById](github://myorg/api/src/user.service.ts#getUserById)
+knowledge-ai/
+├── apps/
+│   ├── backend/        # NestJS 백엔드
+│   └── admin/         # Next.js 어드민 대시보드
+├── packages/
+│   ├── ui/            # 공통 UI 컴포넌트
+│   ├── config/        # 공통 설정
+│   └── types/         # 공통 타입 정의
+└── docs/             # 프로젝트 문서
 ```
 
-Knowledge AI automatically:
-- Extracts code snippets from GitHub
-- Embeds them in documentation  
-- Tracks changes for updates
+## 🛠 Development Stack
 
-### Smart Code Tracking
-- **Real-time Webhook Processing**: Instant detection of code changes via GitHub webhooks
-- **Intelligent Reference Updates**: Automatic updates when referenced code changes
-- **Dependency Tracking**: Monitors file relationships and cascading impacts
-- **Staleness Detection**: Identifies outdated code references automatically
+- **Backend**: NestJS + TypeScript
+- **Frontend**: Next.js + TypeScript
+- **Database**: PostgreSQL + Redis
+- **AI/LLM**: OpenAI API / Ollama
+- **UI**: Tailwind CSS + Shadcn UI
+- **State Management**: TanStack Query
+- **Build Tool**: Turborepo
 
-### Enhanced Notifications
-- **Context-aware Alerts**: Smart notifications based on change impact
-- **Multi-channel Support**: Slack, email, and in-app notifications
-- **Batched Updates**: Groups related changes for efficient processing
-- **Custom Notification Rules**: Configurable alerts based on team preferences
+## 📚 Documentation
 
-### Advanced Event Processing
-- **Pull Request Integration**: Processes PR events (opened, merged, synchronized)
-- **Merge Conflict Handling**: Intelligent resolution of documentation conflicts  
-- **Batch Change Processing**: Efficient handling of large code updates
-- **Security Validation**: Cryptographic webhook signature verification
+자세한 문서는 `docs` 디렉토리를 참조하세요:
 
-> 🔗 For complete feature documentation, see [docs/features.md](./docs/features.md)
+- [Project Overview](./docs/project-overview.md)
+- [Tech Stack](./docs/tech-stack.md)
+- [Project Structure](./docs/project-structure.md)
+- [Requirements](./docs/requirements.md)
+- [Features](./docs/features.md)
+- [Configuration](./docs/configuration.md)
+- [Implementation](./docs/implementation.md)
+- [Roadmap](./docs/roadmap.md)
 
 ## 🧪 Testing
 
 ```bash
-# Unit tests
+# 백엔드 테스트
+cd apps/backend
+pnpm test        # 단위 테스트
+pnpm test:e2e    # E2E 테스트
+pnpm test:cov    # 커버리지 리포트
+
+# 프론트엔드 테스트
+cd apps/admin
 pnpm test
-
-# Watch mode for development  
-pnpm test:watch
-
-# E2E tests with test database
-pnpm test:e2e:full
-
-# Test coverage report
-pnpm test:cov
 ```
 
-### Development Commands
+## 🐳 Docker
 
+전체 스택 실행:
 ```bash
-# Development environment (tunnel + server)
-make dev
-
-# Check current tunnel URL
-make tunnel-url  
-
-# Stop all services
-make stop
-
-# Clean up processes
-make clean
-
-# Show available commands
-make help
+docker-compose up -d
 ```
 
-## 🚀 Deployment
-
-### Railway (Recommended)
-1. Connect GitHub repository to Railway
-2. Set environment variables in dashboard
-3. Deploy automatically on push
-
-### Docker
+개발 환경 서비스만 실행:
 ```bash
-# Build and run
-docker build -t knowledge-ai .
-docker run -p 3000:3000 --env-file .env knowledge-ai
+docker-compose up -d postgres redis
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how to get started:
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### Development Process
-1. **Fork** the repository
-2. **Create** feature branch: `git checkout -b feature/amazing-feature`
-3. **Follow** coding standards (see implementation guide)
-4. **Write tests** for new functionality
-5. **Submit** pull request
-
-### Required for All Contributions
-- [ ] Unit tests pass: `pnpm test`
-- [ ] E2E tests pass: `pnpm test:e2e:full`  
-- [ ] Code follows style guide: `pnpm lint`
-- [ ] Documentation updated if needed
-
-> 💻 For detailed development guidelines, see [docs/implementation.md](./docs/implementation.md)
-
-### Areas for Contribution
-- 🔌 New integrations (Teams, Discord, Linear)
-- 🧠 AI prompt improvements
-- 🎨 UI/UX enhancements  
-- 📚 Documentation improvements
-- 🐛 Bug fixes and performance optimizations
-
-## 📚 Documentation
-
-- 📖 **[Complete Documentation](./docs/)** - Comprehensive guides and references
-- 🎯 **[Project Overview](./docs/project-overview.md)** - Vision and goals
-- 🏗️ **[Architecture](./docs/project-structure.md)** - Technical deep dive
-- ⚙️ **[Configuration](./docs/configuration.md)** - Setup and integration guides
-- 🗺️ **[Roadmap](./docs/roadmap.md)** - Future features and timeline
-
-## 🆘 Support
-
-- 📝 **Issues**: [GitHub Issues](../../issues) for bugs and feature requests
-- 💬 **Discussions**: [GitHub Discussions](../../discussions) for questions
-- 📧 **Contact**: Reach out to the development team
-
-## 📄 License
+## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-⭐ **If Knowledge AI helps your team, please give it a star!**
-
-*Built with ❤️ using NestJS, OpenAI GPT-4, and TypeScript*
